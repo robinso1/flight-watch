@@ -1,0 +1,35 @@
+name: demo-message
+
+on:
+  workflow_dispatch:
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Отправить пример сообщений
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          import msg, watch
+          now = datetime.now(timezone.utc).isoformat()
+          gf = "https://www.google.com/travel/flights/search?tfs=GhoSCjIwMjctMDItMDJqBRIDTEVEcgUSA0tHREIBAUgBmAEC&hl=ru&curr=RUB"
+          m1 = msg.deal("fire", "LED", "KGD", "2027-02-02", 3004, norm=4549, stops=0, visa="free",
+                        links=[("Авиасейлс", "https://www.aviasales.ru/search/LED0202KGD1"), ("Google Flights", gf)],
+                        found_at=now, priority=True, cache_note=True)
+          out = dict(origin="EVN", dest="LED", date="2026-12-17", price=14823, carrier="FLYONE Armenia", dep_time="06:00", stops=0)
+          back = dict(origin="LED", dest="EVN", date="2026-12-17", price=16944, carrier="FLYONE Armenia", dep_time="09:50", stops=0)
+          lo = [("Авиасейлс", "https://www.aviasales.ru/search/EVN1712LED1"), ("Google Flights", "https://www.google.com/travel/flights")]
+          lb = [("Авиасейлс", "https://www.aviasales.ru/search/LED1712EVN1"), ("Google Flights", "https://www.google.com/travel/flights")]
+          m2 = msg.roundtrip("great", out, back, 31767, links_out=lo, links_back=lb)
+          watch.tg_send(m1, html=True)
+          watch.tg_send(m2, html=True)
+          PY
