@@ -9,21 +9,32 @@
       "name": "EVN-LED",
       "origin": "EVN",
       "dest": "LED",
-      "dates": ["2026-12-15", "2026-12-16", "2026-12-17", "2026-12-18"],
-      "threshold_rub": null
+      "dates": [
+        "2026-12-15",
+        "2026-12-16",
+        "2026-12-17",
+        "2026-12-18"
+      ]
     },
     {
       "name": "LED-EVN",
       "origin": "LED",
       "dest": "EVN",
-      "dates": ["2026-12-15", "2026-12-16", "2026-12-17", "2026-12-18"],
-      "threshold_rub": null
+      "dates": [
+        "2026-12-15",
+        "2026-12-16",
+        "2026-12-17",
+        "2026-12-18"
+      ]
     }
   ],
   "combo": {
     "out": "EVN-LED",
     "back": "LED-EVN",
     "min_stay_days": 0,
-    "threshold_rub": null
-  }
+    "hot_rub": 20000,
+    "fire_rub": 14000
+  },
+  "hot_rub": 10000,
+  "fire_rub": 7000
 }

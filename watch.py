@@ -165,6 +165,41 @@ def best_combo(cfg, cheapest):
     return best
 
 
+def hot_level(price, hot, fire):
+    """0 - обычная цена, 1 - горящая, 2 - очень горящая."""
+    if fire and price <= fire:
+        return 2
+    if hot and price <= hot:
+        return 1
+    return 0
+
+
+LEVEL_NAME = {1: "ГОРЯЩИЙ БИЛЕТ", 2: "ОЧЕНЬ ГОРЯЩИЙ БИЛЕТ"}
+AIRLINE_SITES = {
+    "flyone": "https://www.flyone.eu",
+    "россия": "https://www.rossiya-airlines.com",
+    "rossiya": "https://www.rossiya-airlines.com",
+    "aeroflot": "https://www.aeroflot.ru",
+    "аэрофлот": "https://www.aeroflot.ru",
+    "победа": "https://www.pobeda.aero",
+    "pobeda": "https://www.pobeda.aero",
+}
+
+
+def links(cfg, origin, dest, day, airlines=""):
+    """Ссылки на покупку: Google Flights, Авиасейлс и сайт перевозчика."""
+    out = [
+        "Google Flights: " + gf_link(cfg, origin, dest, day),
+        f"Авиасейлс: https://www.aviasales.ru/search/{origin}{day[8:10]}{day[5:7]}{dest}1",
+    ]
+    seen = set()
+    for name, url in AIRLINE_SITES.items():
+        if name in airlines.lower() and url not in seen:
+            seen.add(url)
+            out.append(f"Сайт перевозчика: {url}")
+    return "\n".join(out)
+
+
 def line(day, o):
     st = "прямой" if o["stops"] == 0 else f"пересадок: {o['stops']}"
     return f"{day[8:]}.{day[5:7]} {money(o['price'])}, {o['airlines']}, вылет {o['dep'][-5:]}, {st}"
@@ -212,21 +247,23 @@ def run(cfg):
             best = min(offers, key=lambda o: o["price"])
             cheapest[key] = best
             k = keys.setdefault(key, {"min": None, "last": None, "alerted": None})
-            alerts = []
+            alerts, hot_alerts = [], []
             if k["min"] is None:
                 k["min"] = best["price"]
             elif best["price"] < k["min"] * drop:
                 alerts.append(f"Новый минимум по {r['name']}: было {money(k['min'])}, стало {money(best['price'])}")
             k["min"] = min(k["min"], best["price"])
-            thr = r.get("threshold_rub")
-            if thr and best["price"] <= thr and (k["alerted"] is None or best["price"] < k["alerted"] * drop):
-                alerts.append(f"Ниже вашего порога {money(thr)} по {r['name']}")
+            lvl = hot_level(best["price"], cfg.get("hot_rub"), cfg.get("fire_rub"))
+            if lvl and (lvl > k.get("lvl", 0) or k["alerted"] is None or best["price"] < k["alerted"] * drop):
+                hot_alerts.append(f"{LEVEL_NAME[lvl]} {r['name']}: {money(best['price'])}")
                 k["alerted"] = best["price"]
+                k["lvl"] = lvl
             if k["last"] != best["price"]:
                 append_csv([stamp, r["name"], day, best["price"], best["airlines"], best["dep"], best["stops"]])
                 k["last"] = best["price"]
-            if alerts and not first_run:
-                tg_send("\n".join(alerts) + "\n" + line(day, best) + "\n" + gf_link(cfg, r["origin"], r["dest"], day))
+            to_send = hot_alerts + ([] if first_run else alerts)
+            if to_send:
+                tg_send("\n".join(to_send) + "\n" + line(day, best) + "\n" + links(cfg, r["origin"], r["dest"], day, best["airlines"]))
 
     # общий сбой источника
     if total_req and len(errors) == total_req:
@@ -250,16 +287,21 @@ def run(cfg):
     combo = best_combo(cfg, cheapest)
     if combo:
         cm = meta.get("combo_min")
-        c_thr = cfg["combo"].get("threshold_rub")
-        msg = []
+        msg, hot_msg = [], []
         if cm is not None and combo["total"] < cm * drop:
             msg.append(f"Новая лучшая пара туда-обратно: было {money(cm)}, стало {money(combo['total'])}")
-        if c_thr and combo["total"] <= c_thr and (meta.get("combo_alerted") is None or combo["total"] < meta["combo_alerted"] * drop):
-            msg.append(f"Пара туда-обратно ниже порога {money(c_thr)}")
+        clvl = hot_level(combo["total"], cfg["combo"].get("hot_rub"), cfg["combo"].get("fire_rub"))
+        if clvl and (clvl > meta.get("combo_lvl", 0) or meta.get("combo_alerted") is None or combo["total"] < meta["combo_alerted"] * drop):
+            hot_msg.append(f"{LEVEL_NAME[clvl]}, пара туда-обратно: {money(combo['total'])}")
             meta["combo_alerted"] = combo["total"]
+            meta["combo_lvl"] = clvl
         meta["combo_min"] = combo["total"] if cm is None else min(cm, combo["total"])
-        if msg and not first_run:
-            tg_send("\n".join(msg) + f"\nИтого {money(combo['total'])}\nТуда: " + line(combo["out_day"], combo["out"]) + "\nОбратно: " + line(combo["back_day"], combo["back"]))
+        to_send = hot_msg + ([] if first_run else msg)
+        if to_send:
+            c = cfg["combo"]
+            r_out = next(r for r in cfg["routes"] if r["name"] == c["out"])
+            r_back = next(r for r in cfg["routes"] if r["name"] == c["back"])
+            tg_send("\n".join(to_send) + f"\nИтого {money(combo['total'])}\nТуда: " + line(combo["out_day"], combo["out"]) + "\n" + links(cfg, r_out["origin"], r_out["dest"], combo["out_day"], combo["out"]["airlines"]) + "\nОбратно: " + line(combo["back_day"], combo["back"]) + "\n" + links(cfg, r_back["origin"], r_back["dest"], combo["back_day"], combo["back"]["airlines"]))
 
     # первое сообщение и суточная сводка
     today = now().strftime("%Y-%m-%d")
@@ -296,8 +338,8 @@ def selftest():
     DRY = True
     DATA = Path(tempfile.mkdtemp())
     cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
-    cfg["routes"][0]["threshold_rub"] = 9000
-    cfg["combo"]["threshold_rub"] = 15000
+    cfg["hot_rub"], cfg["fire_rub"] = 10000, 7000
+    cfg["combo"]["hot_rub"], cfg["combo"]["fire_rub"] = 20000, 14000
     for r in cfg["routes"]:
         r["dates"] = [(now().date() + timedelta(days=d)).isoformat() for d in (60, 61)]
     globals()["fetch_offers"] = lambda cfg, o, d, day: FAKE.pop(0)(o, d, day)
