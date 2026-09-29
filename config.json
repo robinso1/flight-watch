@@ -36,5 +36,20 @@
     "fire_rub": 14000
   },
   "hot_rub": 10000,
-  "fire_rub": 7000
+  "fire_rub": 7000,
+  "anomaly": {
+    "origins": [
+      "LED",
+      "MOW"
+    ],
+    "priority": [
+      "LED-KGD",
+      "LED-EVN"
+    ],
+    "priority_ratio": 0.7,
+    "ratio": 0.5,
+    "fire_ratio": 0.35,
+    "max_price_rub": 30000,
+    "max_changes": 1
+  }
 }
