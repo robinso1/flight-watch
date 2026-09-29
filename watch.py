@@ -20,6 +20,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import msg
+
 ROOT = Path(__file__).parent
 MSK = ZoneInfo("Europe/Moscow")
 DATA = ROOT / "data"
@@ -34,24 +36,31 @@ def money(v):
     return f"{int(v):,}".replace(",", " ") + " руб."
 
 
-def tg_send(text):
-    print("--- TG ---\n" + text + "\n----------")
+def tg_send(text, html=False):
+    """Отправка в Telegram. html=True - текст с разметкой (жирный, ссылки); при отказе шлём без разметки."""
+    print("--- TG ---\n" + (msg.strip_tags(text) if html else text) + "\n----------")
     token, chat = os.environ.get("TG_TOKEN"), os.environ.get("TG_CHAT")
     if DRY or not token or not chat:
         if not DRY:
             print("TG_TOKEN или TG_CHAT не заданы, сообщение не отправлено")
         return False
-    body = urllib.parse.urlencode(
-        {"chat_id": chat, "text": text, "disable_web_page_preview": "true"}
-    ).encode()
+
+    def post(body):
+        urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage", urllib.parse.urlencode(body).encode(), timeout=20).read()
+
+    base = {"chat_id": chat, "disable_web_page_preview": "true"}
     try:
-        urllib.request.urlopen(
-            f"https://api.telegram.org/bot{token}/sendMessage", body, timeout=20
-        ).read()
+        post({**base, "text": text, **({"parse_mode": "HTML"} if html else {})})
         return True
     except Exception as e:  # токен в тексте ошибки не печатаем
         print("Ошибка отправки в Telegram:", type(e).__name__)
-        return False
+    if html:  # запасной путь: лучше сообщение без красоты, чем потерянный алерт
+        try:
+            post({**base, "text": msg.strip_tags(text)})
+            return True
+        except Exception as e:
+            print("Ошибка запасной отправки:", type(e).__name__)
+    return False
 
 
 def gf_link(cfg, origin, dest, day):
@@ -200,6 +209,25 @@ def links(cfg, origin, dest, day, airlines=""):
     return "\n".join(out)
 
 
+def link_pairs(cfg, origin, dest, day, airlines=""):
+    """Ссылки для проверки билета: Авиасейлс, Google Flights и сайт перевозчика, если он известен."""
+    pairs = [
+        ("Авиасейлс", f"https://www.aviasales.ru/search/{origin}{day[8:10]}{day[5:7]}{dest}1"),
+        ("Google Flights", gf_link(cfg, origin, dest, day)),
+    ]
+    seen = set()
+    for name, url in AIRLINE_SITES.items():
+        if name in airlines.lower() and url not in seen:
+            seen.add(url)
+            pairs.append(("Сайт перевозчика", url))
+    return pairs
+
+
+def leg(day, o, origin, dest):
+    return {"origin": origin, "dest": dest, "date": day, "price": o["price"], "carrier": o["airlines"],
+            "dep_time": o["dep"][-5:], "stops": o["stops"]}
+
+
 def line(day, o):
     st = "прямой" if o["stops"] == 0 else f"пересадок: {o['stops']}"
     return f"{day[8:]}.{day[5:7]} {money(o['price'])}, {o['airlines']}, вылет {o['dep'][-5:]}, {st}"
@@ -248,38 +276,44 @@ def run(cfg):
             cheapest[key] = best
             k = keys.setdefault(key, {"min": None, "last": None, "alerted": None})
             alerts, hot_alerts = [], []
+            prev_min = k["min"]
             if k["min"] is None:
                 k["min"] = best["price"]
             elif best["price"] < k["min"] * drop:
-                alerts.append(f"Новый минимум по {r['name']}: было {money(k['min'])}, стало {money(best['price'])}")
+                alerts.append("drop")
             k["min"] = min(k["min"], best["price"])
             lvl = hot_level(best["price"], cfg.get("hot_rub"), cfg.get("fire_rub"))
             if lvl and (lvl > k.get("lvl", 0) or k["alerted"] is None or best["price"] < k["alerted"] * drop):
-                hot_alerts.append(f"{LEVEL_NAME[lvl]} {r['name']}: {money(best['price'])}")
+                hot_alerts.append(lvl)
                 k["alerted"] = best["price"]
                 k["lvl"] = lvl
             if k["last"] != best["price"]:
                 append_csv([stamp, r["name"], day, best["price"], best["airlines"], best["dep"], best["stops"]])
                 k["last"] = best["price"]
-            to_send = hot_alerts + ([] if first_run else alerts)
-            if to_send:
-                tg_send("\n".join(to_send) + "\n" + line(day, best) + "\n" + links(cfg, r["origin"], r["dest"], day, best["airlines"]))
+            if hot_alerts or (alerts and not first_run):
+                kind = ("great" if hot_alerts[0] == 2 else "low") if hot_alerts else "drop"
+                tg_send(
+                    msg.deal(kind, r["origin"], r["dest"], day, best["price"], prev=prev_min if alerts else None,
+                             stops=best["stops"], dep_time=best["dep"][-5:], carrier=best["airlines"],
+                             links=link_pairs(cfg, r["origin"], r["dest"], day, best["airlines"])),
+                    html=True,
+                )
 
     # общий сбой источника
     if total_req and len(errors) == total_req:
         meta["fail_streak"] = meta.get("fail_streak", 0) + 1
         if meta["fail_streak"] == 3:
-            tg_send("Google Flights не отвечает уже 3 проверки подряд. Пример ошибки: " + errors[0])
+            tg_send(msg.notice("⚠️", "Google Flights не отвечает", "Уже 3 проверки подряд. Пример ошибки: " + errors[0]), html=True)
     else:
         if meta.get("fail_streak", 0) >= 3:
-            tg_send("Google Flights снова отвечает.")
+            tg_send(msg.notice("✅", "Google Flights снова отвечает"), html=True)
         meta["fail_streak"] = 0
 
     # источник отвечает, но рейсов нет
     if total_req and not errors and not cheapest:
         meta["empty_streak"] = meta.get("empty_streak", 0) + 1
         if meta["empty_streak"] == 6:
-            tg_send("Три часа подряд Google Flights не показывает ни одного рейса на эти даты. Возможно, продажа еще не открыта или перевозчики в выдаче не отображаются. Проверьте вручную.")
+            tg_send(msg.notice("⚠️", "Нет рейсов в выдаче", "Три часа подряд Google Flights не показывает ни одного рейса на эти даты. Возможно, продажа ещё не открыта или перевозчики в выдаче не отображаются. Проверьте вручную."), html=True)
     elif cheapest:
         meta["empty_streak"] = 0
 
@@ -287,38 +321,51 @@ def run(cfg):
     combo = best_combo(cfg, cheapest)
     if combo:
         cm = meta.get("combo_min")
-        msg, hot_msg = [], []
-        if cm is not None and combo["total"] < cm * drop:
-            msg.append(f"Новая лучшая пара туда-обратно: было {money(cm)}, стало {money(combo['total'])}")
+        new_min = cm is not None and combo["total"] < cm * drop
+        hot_c = None
         clvl = hot_level(combo["total"], cfg["combo"].get("hot_rub"), cfg["combo"].get("fire_rub"))
         if clvl and (clvl > meta.get("combo_lvl", 0) or meta.get("combo_alerted") is None or combo["total"] < meta["combo_alerted"] * drop):
-            hot_msg.append(f"{LEVEL_NAME[clvl]}, пара туда-обратно: {money(combo['total'])}")
+            hot_c = clvl
             meta["combo_alerted"] = combo["total"]
             meta["combo_lvl"] = clvl
+        prev_combo = cm
         meta["combo_min"] = combo["total"] if cm is None else min(cm, combo["total"])
-        to_send = hot_msg + ([] if first_run else msg)
-        if to_send:
+        if hot_c or (new_min and not first_run):
             c = cfg["combo"]
             r_out = next(r for r in cfg["routes"] if r["name"] == c["out"])
             r_back = next(r for r in cfg["routes"] if r["name"] == c["back"])
-            tg_send("\n".join(to_send) + f"\nИтого {money(combo['total'])}\nТуда: " + line(combo["out_day"], combo["out"]) + "\n" + links(cfg, r_out["origin"], r_out["dest"], combo["out_day"], combo["out"]["airlines"]) + "\nОбратно: " + line(combo["back_day"], combo["back"]) + "\n" + links(cfg, r_back["origin"], r_back["dest"], combo["back_day"], combo["back"]["airlines"]))
+            kind = ("great" if hot_c == 2 else "low") if hot_c else "drop"
+            tg_send(
+                msg.roundtrip(
+                    kind,
+                    leg(combo["out_day"], combo["out"], r_out["origin"], r_out["dest"]),
+                    leg(combo["back_day"], combo["back"], r_back["origin"], r_back["dest"]),
+                    combo["total"],
+                    links_out=link_pairs(cfg, r_out["origin"], r_out["dest"], combo["out_day"], combo["out"]["airlines"]),
+                    links_back=link_pairs(cfg, r_back["origin"], r_back["dest"], combo["back_day"], combo["back"]["airlines"]),
+                    prev=prev_combo if new_min else None,
+                ),
+                html=True,
+            )
 
     # первое сообщение и суточная сводка
     today = now().strftime("%Y-%m-%d")
     want_digest = first_run or (now().hour >= cfg.get("digest_hour_msk", 9) and meta.get("digest_date") != today)
     if want_digest and (cheapest or unpriced_seen):
-        head = "Мониторинг запущен. Сейчас в выдаче:" if first_run else "Сводка за сутки:"
-        parts = [head]
-        for key in sorted(cheapest):
-            rname, day = key.split("|")
-            parts.append(f"{rname} " + line(day, cheapest[key]))
-        if combo:
-            parts.append(f"Лучшая пара: {money(combo['total'])} (туда {combo['out_day'][8:]}.{combo['out_day'][5:7]}, обратно {combo['back_day'][8:]}.{combo['back_day'][5:7]})")
-        parts.append("Перевозчики в выдаче Google: " + (", ".join(sorted(airlines_seen)) or "нет"))
-        if unpriced_seen:
-            names = sorted({o["airlines"] + " " + o["dep"][-5:] for v in unpriced_seen.values() for o in v})
-            parts.append("Рейсы без цены в Google (купить можно только на сайте перевозчика): " + "; ".join(names))
-        tg_send("\n".join(parts))
+        head = "🟢 <b>МОНИТОРИНГ ЗАПУЩЕН</b>" if first_run else "📊 <b>СВОДКА</b>"
+        routes = []
+        for r in cfg["routes"]:
+            opts = []
+            for key, o in cheapest.items():
+                rname, day = key.split("|")
+                if rname == r["name"]:
+                    opts.append({"date": day, "price": o["price"], "dep_time": o["dep"][-5:], "carrier": o["airlines"], "stops": o["stops"]})
+            routes.append({"origin": r["origin"], "dest": r["dest"], "options": opts})
+        unpriced_names = sorted({o["airlines"] + " " + o["dep"][-5:] for v in unpriced_seen.values() for o in v})
+        tg_send(
+            msg.digest(head, routes, pair=combo, carriers=sorted(airlines_seen), unpriced=unpriced_names),
+            html=True,
+        )
         meta["digest_date"] = today
     meta["started"] = True
 
@@ -365,7 +412,7 @@ def main():
     if a.selftest:
         return selftest()
     if a.test_tg:
-        ok = tg_send("Проверка связи: бот мониторинга билетов работает.")
+        ok = tg_send(msg.notice("✅", "Проверка связи", "Бот мониторинга билетов работает."), html=True)
         sys.exit(0 if ok else 1)
     run(json.loads((ROOT / "config.json").read_text(encoding="utf-8")))
 

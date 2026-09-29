@@ -16,7 +16,8 @@ import urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 
-import watch  # общие функции: tg_send, money, now, gf_link
+import msg
+import watch  # общие функции: tg_send, now, gf_link
 
 ROOT = Path(__file__).parent
 # Страны, куда россиянам, по моим данным, не нужна виза заранее. НЕ ПРОВЕРЕНО на 2026 год:
@@ -170,28 +171,27 @@ def run(c, token, data_dir, offers, notify):
 
     # приоритетные маршруты идут первыми, дальше по глубине скидки
     found.sort(key=lambda x: (x[1] not in priority, x[0]))
-    visa_text = {"free": "виза не нужна (по списку в настройках, проверьте правила)", "visa": "виза, возможно, нужна", "unknown": "виза: неизвестно"}
     sent = 0
     for ratio, gk, o, norm, src, key, vs in found[: c["max_alerts"]]:
         origin, dest = gk.split("-")
-        title = "ОЧЕНЬ ГОРЯЩАЯ ЦЕНА" if ratio <= c["fire_ratio"] else "АНОМАЛЬНО НИЗКАЯ ЦЕНА"
-        if gk in priority:
-            title = "ГЛАВНЫЙ МАРШРУТ, " + title
         d = o["depart_date"]
-        stops = "прямой" if not o.get("number_of_changes") else f"пересадок: {o['number_of_changes']}"
-        name = (cities.get(dest) or {}).get("n") or dest
-        oname = "Москвы" if origin == "MOW" else origin
-        text = (
-            f"{title}: {origin} - {name} ({dest}), вылет из {oname}\n"
-            f"{watch.money(o['value'])} при норме {watch.money(norm)} (это {int(ratio * 100)}%, норма по данным: {src})\n"
-            f"Вылет {d[8:]}.{d[5:7]}, {stops}, {visa_text[vs]}\n"
-            f"Найдено {str(o.get('found_at', ''))[:16].replace('T', ' ')}\n"
-            f"Авиасейлс: https://www.aviasales.ru/search/{origin}{d[8:10]}{d[5:7]}{dest}1\n"
-            f"Google Flights: {watch.gf_link({'currency': 'RUB', 'language': 'ru'}, origin, dest, d)}\n"
-            "Цена из кэша Авиасейлса, перед покупкой проверьте её по ссылке."
+        text = msg.deal(
+            "fire" if ratio <= c["fire_ratio"] else "low",
+            origin, dest, d, o["value"],
+            norm=norm,
+            stops=o.get("number_of_changes") or 0,
+            visa=vs if vs in ("free", "visa") else None,
+            links=[
+                ("Авиасейлс", f"https://www.aviasales.ru/search/{origin}{d[8:10]}{d[5:7]}{dest}1"),
+                ("Google Flights", watch.gf_link({"currency": "RUB", "language": "ru"}, origin, dest, d)),
+            ],
+            found_at=o.get("found_at"),
+            cities=cities,
+            priority=gk in priority,
+            cache_note=True,
         )
         if notify:
-            notify(text)
+            notify(text, html=True)
         alerted[key] = o["value"]
         sent += 1
 
