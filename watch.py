@@ -66,9 +66,49 @@ def gf_link(cfg, origin, dest, day):
     return q.url()
 
 
+def parse_google(html):
+    """Устойчивый разбор выдачи Google Flights. Рейсы без цены не роняют весь разбор."""
+    import json as _json
+
+    from fast_flights.parser import _parse_time
+    from selectolax.lexbor import LexborHTMLParser
+
+    script = LexborHTMLParser(html).css_first(r"script.ds\:1")
+    if script is None:
+        raise RuntimeError("в ответе Google нет блока с рейсами (капча или страница согласия)")
+    data = script.text().split("data:", 1)[1].rsplit(",", 1)[0]
+    if data.endswith("errorHasStatus: true"):
+        return []
+    payload = _json.loads(data)
+    items = (payload[3] or [None])[0] or []
+    out = []
+    for k in items:
+        try:
+            flight = k[0]
+            try:
+                price = k[1][0][1]
+            except (TypeError, IndexError):
+                price = None
+            segs = flight[2] or []
+            first = segs[0]
+            t = _parse_time(first[8])
+            d = first[20] or [0, 0, 0]
+            out.append(
+                {
+                    "price": int(price) if price else None,
+                    "airlines": ", ".join(flight[1] or []),
+                    "dep": f"{d[2]:02d}.{d[1]:02d} {t[0]:02d}:{t[1]:02d}",
+                    "stops": len(segs) - 1,
+                }
+            )
+        except Exception:
+            continue
+    return out
+
+
 def fetch_offers(cfg, origin, dest, day):
-    """Вернуть список предложений [{price, airlines, dep, stops}] за один день в одну сторону."""
-    from fast_flights import FlightQuery, FlightsNotFound, create_query, get_flights
+    """Список предложений [{price|None, airlines, dep, stops}] за один день в одну сторону."""
+    from fast_flights import FlightQuery, create_query, fetch_flights_html
 
     q = create_query(
         flights=[FlightQuery(date=day, from_airport=origin, to_airport=dest)],
@@ -77,24 +117,9 @@ def fetch_offers(cfg, origin, dest, day):
         language=cfg["language"],
         max_stops=cfg.get("max_stops"),
     )
-    try:
-        res = get_flights(q)
-    except FlightsNotFound:
-        return []
-    out = []
-    for f in res:
-        segs = f.flights
-        if not segs or not f.price:
-            continue
-        stops = len(segs) - 1
-        if cfg.get("max_stops") is not None and stops > cfg["max_stops"]:
-            continue
-        d = segs[0].departure
-        dep = f"{d.date[2]:02d}.{d.date[1]:02d} {d.time[0]:02d}:{d.time[1]:02d}"
-        out.append(
-            {"price": int(f.price), "airlines": ", ".join(f.airlines), "dep": dep, "stops": stops}
-        )
-    return out
+    offers = parse_google(fetch_flights_html(q))
+    ms = cfg.get("max_stops")
+    return [o for o in offers if ms is None or o["stops"] <= ms]
 
 
 def load_json(path, default):
@@ -154,6 +179,7 @@ def run(cfg):
     stamp = now().strftime("%Y-%m-%d %H:%M")
 
     cheapest, errors, empties, total_req, airlines_seen = {}, [], 0, 0, set()
+    unpriced_seen = {}
     for r in cfg["routes"]:
         for day in r["dates"]:
             if date.fromisoformat(day) < now().date():
@@ -163,7 +189,9 @@ def run(cfg):
             try:
                 offers = fetch_offers(cfg, r["origin"], r["dest"], day)
             except Exception as e:
-                errors.append(f"{key}: {type(e).__name__} {str(e)[:120]}")
+                import traceback
+                tb = traceback.extract_tb(e.__traceback__)[-1]
+                errors.append(f"{key}: {type(e).__name__} {str(e)[:100]} ({tb.name}:{tb.lineno})")
                 offers = None
             if not DRY:
                 time.sleep(random.uniform(3, 8))
@@ -174,6 +202,13 @@ def run(cfg):
                 continue
             for o in offers:
                 airlines_seen.update(a.strip() for a in o["airlines"].split(","))
+            unpriced = [o for o in offers if not o["price"]]
+            offers = [o for o in offers if o["price"]]
+            if unpriced:
+                unpriced_seen[key] = unpriced
+            if not offers:
+                empties += 1
+                continue
             best = min(offers, key=lambda o: o["price"])
             cheapest[key] = best
             k = keys.setdefault(key, {"min": None, "last": None, "alerted": None})
@@ -229,7 +264,7 @@ def run(cfg):
     # первое сообщение и суточная сводка
     today = now().strftime("%Y-%m-%d")
     want_digest = first_run or (now().hour >= cfg.get("digest_hour_msk", 9) and meta.get("digest_date") != today)
-    if want_digest and cheapest:
+    if want_digest and (cheapest or unpriced_seen):
         head = "Мониторинг запущен. Сейчас в выдаче:" if first_run else "Сводка за сутки:"
         parts = [head]
         for key in sorted(cheapest):
@@ -238,6 +273,9 @@ def run(cfg):
         if combo:
             parts.append(f"Лучшая пара: {money(combo['total'])} (туда {combo['out_day'][8:]}.{combo['out_day'][5:7]}, обратно {combo['back_day'][8:]}.{combo['back_day'][5:7]})")
         parts.append("Перевозчики в выдаче Google: " + (", ".join(sorted(airlines_seen)) or "нет"))
+        if unpriced_seen:
+            names = sorted({o["airlines"] + " " + o["dep"][-5:] for v in unpriced_seen.values() for o in v})
+            parts.append("Рейсы без цены в Google (купить можно только на сайте перевозчика): " + "; ".join(names))
         tg_send("\n".join(parts))
         meta["digest_date"] = today
     meta["started"] = True
