@@ -27,7 +27,8 @@ VISA_FREE = ["RU", "BY", "KZ", "KG", "TJ", "UZ", "AM", "AZ", "GE", "TR", "RS", "
 DEFAULTS = {
     "origins": ["LED", "MOW"],
     "priority": ["LED-KGD", "LED-EVN"],  # главные маршруты: порог мягче
-    "priority_ratio": 0.7,
+    "priority_ratio": 0.5,
+    "abs_rub": {},           # {"LED-KGD": {"send": 2000, "fire": 1500}}: абсолютные пороги вместо процентов
     "visa_free": VISA_FREE,
     "origin": "LED",
     "one_way": True,
@@ -150,11 +151,17 @@ def run(c, token, data_dir, offers, notify):
         else:
             limit = c["ratio"]
         cap = c["max_price_rub"] if gk not in priority else max(c["max_price_rub"], 1)
-        if norm and best["value"] <= norm * limit and best["value"] <= cap:
+        ab = c.get("abs_rub", {}).get(gk)
+        if ab:
+            hit = best["value"] <= ab["send"]
+            norm = norm or ab.get("norm")
+        else:
+            hit = bool(norm) and best["value"] <= norm * limit and best["value"] <= cap
+        if hit:
             key = f"{gk}|{best['depart_date']}"
             prev = alerted.get(key)
             if prev is None or best["value"] < prev * (1 - c["realert_drop"]):
-                found.append((best["value"] / norm, gk, best, norm, src, key, vs))
+                found.append((best["value"] / (norm or best["value"]), gk, best, norm, src, key, vs))
 
     for gk, lst in groups.items():
         m = min(o["value"] for o in lst)
@@ -176,7 +183,7 @@ def run(c, token, data_dir, offers, notify):
         origin, dest = gk.split("-")
         d = o["depart_date"]
         text = msg.deal(
-            "fire" if ratio <= c["fire_ratio"] else "low",
+            "fire" if (o["value"] <= c["abs_rub"][gk]["fire"] if gk in c.get("abs_rub", {}) else ratio <= c["fire_ratio"]) else "low",
             origin, dest, d, o["value"],
             norm=norm,
             stops=o.get("number_of_changes") or 0,
