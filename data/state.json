@@ -1,7 +1,21 @@
 {
- "keys": {},
+ "keys": {
+  "EVN-LED|2026-12-17": {
+   "alerted": null,
+   "last": 14823,
+   "min": 14823
+  },
+  "LED-EVN|2026-12-17": {
+   "alerted": null,
+   "last": 16944,
+   "min": 16944
+  }
+ },
  "meta": {
-  "fail_streak": 1,
+  "combo_min": 31767,
+  "digest_date": "2026-09-29",
+  "empty_streak": 0,
+  "fail_streak": 0,
   "started": true
  }
 }
