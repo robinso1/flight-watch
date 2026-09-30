@@ -151,7 +151,7 @@ def run(c, token, data_dir, offers, notify):
         best = min(lst, key=lambda o: o["value"])
         vs = visa_status(dest, cities, c)
         li = c.get("low_interest", {})
-        if dest in li.get("dests", []) and best["value"] > li["max_price"]:
+        if dest in li.get("dests", []) and best["value"] > li.get("overrides", {}).get(dest, li["max_price"]):
             continue
         if gk in priority:
             limit = c["priority_ratio"]
@@ -248,7 +248,7 @@ def hot_scan(c, token, data_dir, notify):
     for origin, o in cand:
         dest, price, date_ = o["destination"], o["price"], o["departure_at"][:10]
         li = c.get("low_interest", {})
-        if dest in li.get("dests", []) and price > li["max_price"]:
+        if dest in li.get("dests", []) and price > li.get("overrides", {}).get(dest, li["max_price"]):
             continue
         try:
             q = urllib.parse.urlencode({"currency": "rub", "origin": origin, "destination": dest,
