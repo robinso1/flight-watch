@@ -28,6 +28,10 @@ DEFAULTS = {
     "origins": ["LED", "MOW"],
     "priority": ["LED-KGD", "LED-EVN"],  # главные маршруты: порог мягче
     "priority_ratio": 0.5,
+    "hot_discount": 0.6,     # "горячие" Авиасейлс: скидка от медианы календаря цен не меньше 60%
+    "hot_fire_discount": 0.7,
+    "hot_min_points": 8,     # сколько дней в календаре нужно, чтобы медиана считалась надежной
+    "hot_max_price": 40000,
     "abs_rub": {},           # {"LED-KGD": {"send": 2000, "fire": 1500}}: абсолютные пороги вместо процентов
     "visa_free": VISA_FREE,
     "origin": "LED",
@@ -207,6 +211,78 @@ def run(c, token, data_dir, offers, notify):
     return found
 
 
+def median(xs):
+    xs = sorted(xs)
+    n = len(xs)
+    return (xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2) if n else None
+
+
+def hot_scan(c, token, data_dir, notify):
+    """Горячие билеты Авиасейлс (специальные предложения) + своя скидка: цена против медианы календаря цен месяца."""
+    state_path = data_dir / "anomaly_state.json"
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except Exception:
+        state = {"hist": {}, "alerted": {}}
+    alerted = state.setdefault("alerted", {})
+    cities = city_names(data_dir) if notify else {}
+    cand, sent, checked = [], 0, 0
+    for origin in c["origins"]:
+        try:
+            q = urllib.parse.urlencode({"origin": origin, "locale": "ru", "currency": "rub", "market": "ru", "token": token})
+            d = api_get("https://api.travelpayouts.com/aviasales/v3/get_special_offers?" + q)
+            for o in d.get("data") or []:
+                if o.get("price") and o.get("destination") and o.get("departure_at"):
+                    cand.append((origin, o))
+        except Exception as e:
+            print("Ошибка горячих билетов", origin, type(e).__name__, str(e)[:80])
+    found = []
+    for origin, o in cand:
+        dest, price, date_ = o["destination"], o["price"], o["departure_at"][:10]
+        try:
+            q = urllib.parse.urlencode({"currency": "rub", "origin": origin, "destination": dest,
+                                        "show_to_affiliates": "false", "month": date_[:7] + "-01", "token": token})
+            m = api_get("https://api.travelpayouts.com/v2/prices/month-matrix?" + q).get("data") or []
+        except Exception as e:
+            print("Ошибка календаря", origin, dest, type(e).__name__, str(e)[:80])
+            continue
+        rows = [x for x in m if x.get("value") and x.get("actual", True)]
+        checked += 1
+        if len(rows) < c["hot_min_points"]:
+            continue
+        norm = median([x["value"] for x in rows])
+        disc = 1 - price / norm
+        vs = visa_status(dest, cities, c)
+        need = c["hot_fire_discount"] if vs == "visa" else c["hot_discount"]
+        key = f"{origin}-{dest}|{date_}"
+        prev = alerted.get(key)
+        if disc >= need and price <= c["hot_max_price"] and (prev is None or price < prev * (1 - c["realert_drop"])):
+            same = [x for x in rows if x.get("depart_date") == date_]
+            best = min(same, key=lambda x: x["value"]) if same else {}
+            found.append((disc, origin, dest, date_, price, norm, vs, best, key, o))
+    found.sort(key=lambda x: -x[0])
+    for disc, origin, dest, date_, price, norm, vs, best, key, o in found[: c["max_alerts"]]:
+        text = msg.deal(
+            "fire" if disc >= c["hot_fire_discount"] else "low", origin, dest, date_, price,
+            norm=norm, stops=best.get("number_of_changes"),
+            dep_time=o["departure_at"][11:16] if len(o.get("departure_at", "")) >= 16 else None,
+            carrier=o.get("airline_title"),
+            visa=vs if vs in ("free", "visa") else None,
+            links=[
+                ("Авиасейлс", f"https://www.aviasales.ru/search/{origin}{date_[8:10]}{date_[5:7]}{dest}1"),
+                ("Google Flights", watch.gf_link({"currency": "RUB", "language": "ru"}, origin, dest, date_)),
+            ],
+            found_at=best.get("found_at"), cities=cities, cache_note=True,
+        )
+        if notify:
+            notify(text, html=True)
+        alerted[key] = price
+        sent += 1
+    state_path.write_text(json.dumps(state, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+    print(f"Горячие билеты: предложений {len(cand)}, проверено календарей {checked}, подходит {len(found)}, отправлено {sent}")
+    return found
+
+
 def selftest():
     watch.DRY = True
     d = Path(tempfile.mkdtemp())
@@ -220,6 +296,22 @@ def selftest():
     snap += [mk("MOW", "BKK", p) for p in (30000, 31000, 32000, 33000, 34000, 35000)] + [mk("MOW", "BKK", 9000, "2026-11-12")]
     print("== KGD: 6500 при норме ~10 750 (60%), главный маршрут (порог 70%) - алерт первым. IST 9000 - 40%, обычная аномалия. BKK из MOW - 27% ==")
     run(c, "x", d, snap, watch.tg_send)
+    print("== горячие: MIR 9939 при медиане календаря ~36 000 (скидка 72%) ==")
+    global api_get
+    real = api_get
+    def fake(url):
+        if "get_special_offers" in url:
+            return {"data": [{"destination": "MIR", "price": 9939, "departure_at": "2026-10-20T09:30:00+03:00", "airline_title": "Pyramids Airlines"},
+                             {"destination": "UFA", "price": 3534, "departure_at": "2026-10-03T00:45:00+03:00", "airline_title": "Nordwind"}]}
+        base = 36000 if "MIR" in url else 4500
+        rows = [{"depart_date": f"2026-10-{i:02d}", "value": base + i * 300, "actual": True, "number_of_changes": 0, "found_at": "2026-09-30T16:02:13Z"} for i in range(1, 20)]
+        rows.append({"depart_date": "2026-10-20", "value": 9939 if "MIR" in url else 3534, "actual": True, "number_of_changes": 0, "found_at": "2026-09-30T16:02:13Z"})
+        return {"data": rows}
+    api_get = fake
+    try:
+        hot_scan(dict(c, origins=["LED"]), "x", d, watch.tg_send)
+    finally:
+        api_get = real
 
 
 def main():
@@ -245,6 +337,10 @@ def main():
     if len(errors) == len(jobs):
         sys.exit(1)
     run(c, token, data_dir, offers, watch.tg_send)
+    try:
+        hot_scan(c, token, data_dir, watch.tg_send)
+    except Exception as e:
+        print("Горячие билеты: сбой", type(e).__name__, str(e)[:100])
 
 
 if __name__ == "__main__":
