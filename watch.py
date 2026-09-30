@@ -351,7 +351,11 @@ def run(cfg):
     # первое сообщение и суточная сводка
     today = now().strftime("%Y-%m-%d")
     want_digest = first_run or (now().hour >= cfg.get("digest_hour_msk", 9) and meta.get("digest_date") != today)
-    if want_digest and (cheapest or unpriced_seen):
+    if want_digest and not (cheapest or unpriced_seen) and not first_run:
+        # тишина не должна путаться со сбоем: раз в сутки сообщаем, что бот жив
+        tg_send(msg.notice("📊", "Сводка", "Бот работает. Google Flights сейчас не показывает рейсов на выбранные даты, проверки идут по расписанию."), html=True)
+        meta["digest_date"] = today
+    elif want_digest and (cheapest or unpriced_seen):
         head = "🟢 <b>МОНИТОРИНГ ЗАПУЩЕН</b>" if first_run else "📊 <b>СВОДКА</b>"
         routes = []
         for r in cfg["routes"]:
