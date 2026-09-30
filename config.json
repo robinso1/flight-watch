@@ -173,8 +173,8 @@
     ],
     "strict_origins": {
       "MOW": {
-        "ratio": 0.25,
-        "discount": 0.85
+        "ratio": 0.2,
+        "discount": 0.8
       }
     },
     "low_interest": {
