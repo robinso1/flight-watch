@@ -66,6 +66,26 @@
         "send": 6000,
         "fire": 5000,
         "norm": 10000
+      },
+      "LED-MIR": {
+        "send": 12000,
+        "fire": 9000
+      },
+      "LED-AER": {
+        "send": 2500,
+        "fire": 2000
+      },
+      "LED-MCX": {
+        "send": 2500,
+        "fire": 2000
+      },
+      "LED-ARH": {
+        "send": 2500,
+        "fire": 2000
+      },
+      "LED-EVN": {
+        "send": 8000,
+        "fire": 6000
       }
     },
     "visa_free": [
