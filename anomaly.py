@@ -32,6 +32,8 @@ DEFAULTS = {
     "hot_fire_discount": 0.7,
     "hot_min_points": 8,     # сколько дней в календаре нужно, чтобы медиана считалась надежной
     "hot_max_price": 40000,
+    "strict_origins": {},    # {"MOW": {"ratio": 0.25, "discount": 0.85}}: из этих городов только очень сильные аномалии
+    "low_interest": {"dests": [], "max_price": 1500},  # неинтересные внутренние города: только если совсем дёшево
     "abs_rub": {},           # {"LED-KGD": {"send": 2000, "fire": 1500}}: абсолютные пороги вместо процентов
     "visa_free": VISA_FREE,
     "origin": "LED",
@@ -148,12 +150,18 @@ def run(c, token, data_dir, offers, notify):
         norm, src = norm_for(gk, prices, hist, today, c)
         best = min(lst, key=lambda o: o["value"])
         vs = visa_status(dest, cities, c)
+        li = c.get("low_interest", {})
+        if dest in li.get("dests", []) and best["value"] > li["max_price"]:
+            continue
         if gk in priority:
             limit = c["priority_ratio"]
         elif vs == "visa":
             limit = c["fire_ratio"]  # виза нужна: сообщаем только об очень горящих
         else:
             limit = c["ratio"]
+        st = c.get("strict_origins", {}).get(origin)
+        if st:
+            limit = min(limit, st["ratio"])
         cap = c["max_price_rub"] if gk not in priority else max(c["max_price_rub"], 1)
         ab = c.get("abs_rub", {}).get(gk)
         if ab:
@@ -239,6 +247,9 @@ def hot_scan(c, token, data_dir, notify):
     found = []
     for origin, o in cand:
         dest, price, date_ = o["destination"], o["price"], o["departure_at"][:10]
+        li = c.get("low_interest", {})
+        if dest in li.get("dests", []) and price > li["max_price"]:
+            continue
         try:
             q = urllib.parse.urlencode({"currency": "rub", "origin": origin, "destination": dest,
                                         "show_to_affiliates": "false", "month": date_[:7] + "-01", "token": token})
@@ -254,6 +265,8 @@ def hot_scan(c, token, data_dir, notify):
         disc = 1 - price / norm
         vs = visa_status(dest, cities, c)
         need = c["hot_fire_discount"] if vs == "visa" else c["hot_discount"]
+        if origin in c.get("strict_origins", {}):
+            need = max(need, c["strict_origins"][origin]["discount"])
         key = f"{origin}-{dest}|{date_}"
         prev = alerted.get(key)
         if disc >= need and price <= c["hot_max_price"] and (prev is None or price < prev * (1 - c["realert_drop"])):

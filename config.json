@@ -57,11 +57,6 @@
         "fire": 1500,
         "norm": 3000
       },
-      "MOW-KGD": {
-        "send": 2000,
-        "fire": 1500,
-        "norm": 3000
-      },
       "LED-AYT": {
         "send": 6000,
         "fire": 5000,
@@ -129,6 +124,35 @@
       "LA",
       "PH",
       "KH"
-    ]
+    ],
+    "strict_origins": {
+      "MOW": {
+        "ratio": 0.25,
+        "discount": 0.85
+      }
+    },
+    "low_interest": {
+      "dests": [
+        "SVX",
+        "CEK",
+        "UFA",
+        "KUF",
+        "KZN",
+        "PEE",
+        "OVB",
+        "OMS",
+        "TJM",
+        "KJA",
+        "IJK",
+        "GOJ",
+        "RTW",
+        "KLF",
+        "REN",
+        "ULV",
+        "CSY",
+        "PES"
+      ],
+      "max_price": 1500
+    }
   }
 }
