@@ -170,10 +170,6 @@
         "fire": 5000,
         "norm": 10000
       },
-      "LED-MIR": {
-        "send": 12000,
-        "fire": 9000
-      },
       "LED-AER": {
         "send": 2500,
         "fire": 2000
@@ -265,6 +261,16 @@
         "PEE": 3000,
         "KZN": 3000
       }
+    },
+    "niche": {
+      "dests": [
+        "MIR",
+        "NBE",
+        "DJE",
+        "TUN"
+      ],
+      "ratio": 0.2,
+      "discount": 0.8
     }
   }
 }
