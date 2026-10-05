@@ -2,7 +2,7 @@ name: flight-watch
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "5 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,7 +27,7 @@ jobs:
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
-        run: python watch.py
+        run: python watch.py --loop 52 --every 10
       - name: Сохранить историю цен
         run: |
           git config user.name "flight-watch"
