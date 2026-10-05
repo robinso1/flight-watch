@@ -334,7 +334,7 @@ def run(cfg):
     # источник отвечает, но рейсов нет
     if total_req and not errors and not cheapest:
         meta["empty_streak"] = meta.get("empty_streak", 0) + 1
-        if meta["empty_streak"] == 6:
+        if meta["empty_streak"] == 18:
             tg_send(msg.notice("⚠️", "Нет рейсов в выдаче", "Три часа подряд Google Flights не показывает ни одного рейса на эти даты. Возможно, продажа ещё не открыта или перевозчики в выдаче не отображаются. Проверьте вручную."), html=True)
     elif cheapest:
         meta["empty_streak"] = 0
@@ -445,13 +445,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--test-tg", action="store_true")
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--loop", type=int, default=0, help="повторять проверки в течение N минут")
+    ap.add_argument("--every", type=int, default=10, help="интервал между проверками в минутах")
     a = ap.parse_args()
     if a.selftest:
         return selftest()
     if a.test_tg:
         ok = tg_send(msg.notice("✅", "Проверка связи", "Бот мониторинга билетов работает."), html=True)
         sys.exit(0 if ok else 1)
-    run(json.loads((ROOT / "config.json").read_text(encoding="utf-8")))
+    cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
+    if not a.loop:
+        return run(cfg)
+    # длинный запуск: GitHub сильно задерживает cron, поэтому один запуск сам проверяет цены каждые N минут
+    started = time.time()
+    while True:
+        t0 = time.time()
+        try:
+            run(cfg)
+        except Exception as e:
+            print("ERR run", type(e).__name__, str(e)[:200])
+        wait = a.every * 60 - (time.time() - t0)
+        if time.time() + max(wait, 0) - started > a.loop * 60:
+            break
+        time.sleep(max(wait, 30))
 
 
 if __name__ == "__main__":
