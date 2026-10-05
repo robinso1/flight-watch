@@ -6,17 +6,6 @@
   "drop_percent": 3,
   "routes": [
     {
-      "name": "EVN-LED",
-      "origin": "EVN",
-      "dest": "LED",
-      "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
-      ]
-    },
-    {
       "name": "LED-EVN",
       "origin": "LED",
       "dest": "EVN",
@@ -28,14 +17,14 @@
       ]
     },
     {
-      "name": "TBS-LED",
-      "origin": "TBS",
+      "name": "EVN-LED",
+      "origin": "EVN",
       "dest": "LED",
       "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
+        "2026-12-20",
+        "2026-12-21",
+        "2026-12-22",
+        "2026-12-23"
       ]
     },
     {
@@ -50,32 +39,21 @@
       ]
     },
     {
-      "name": "LWN-LED",
-      "origin": "LWN",
+      "name": "TBS-LED",
+      "origin": "TBS",
       "dest": "LED",
       "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
-      ]
-    },
-    {
-      "name": "LED-LWN",
-      "origin": "LED",
-      "dest": "LWN",
-      "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
+        "2026-12-20",
+        "2026-12-21",
+        "2026-12-22",
+        "2026-12-23"
       ]
     }
   ],
   "combo": {
-    "out": "EVN-LED",
-    "back": "LED-EVN",
-    "min_stay_days": 0,
+    "out": "LED-EVN",
+    "back": "EVN-LED",
+    "min_stay_days": 2,
     "hot_rub": 20000,
     "fire_rub": 14000
   },
