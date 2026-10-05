@@ -36,7 +36,9 @@
         "2026-12-16",
         "2026-12-17",
         "2026-12-18"
-      ]
+      ],
+      "extra": 3500,
+      "extra_label": "🚌 Автобус Тбилиси - Ереван и еда"
     },
     {
       "name": "TBS-LED",
@@ -47,7 +49,9 @@
         "2026-12-21",
         "2026-12-22",
         "2026-12-23"
-      ]
+      ],
+      "extra": 3500,
+      "extra_label": "🚌 Автобус Тбилиси - Ереван и еда"
     },
     {
       "name": "SVO-EVN",
@@ -59,7 +63,9 @@
         "2026-12-17",
         "2026-12-18"
       ],
-      "quiet": true
+      "extra": 2500,
+      "extra_label": "🚆 Поезд СПб - Москва и еда",
+      "digest": false
     },
     {
       "name": "EVN-SVO",
@@ -71,7 +77,9 @@
         "2026-12-22",
         "2026-12-23"
       ],
-      "quiet": true
+      "extra": 2500,
+      "extra_label": "🚆 Поезд СПб - Москва и еда",
+      "digest": false
     },
     {
       "name": "DME-EVN",
@@ -83,7 +91,9 @@
         "2026-12-17",
         "2026-12-18"
       ],
-      "quiet": true
+      "extra": 2500,
+      "extra_label": "🚆 Поезд СПб - Москва и еда",
+      "digest": false
     },
     {
       "name": "EVN-DME",
@@ -95,7 +105,9 @@
         "2026-12-22",
         "2026-12-23"
       ],
-      "quiet": true
+      "extra": 2500,
+      "extra_label": "🚆 Поезд СПб - Москва и еда",
+      "digest": false
     },
     {
       "name": "VKO-EVN",
@@ -107,7 +119,9 @@
         "2026-12-17",
         "2026-12-18"
       ],
-      "quiet": true
+      "extra": 2500,
+      "extra_label": "🚆 Поезд СПб - Москва и еда",
+      "digest": false
     },
     {
       "name": "EVN-VKO",
@@ -119,30 +133,32 @@
         "2026-12-22",
         "2026-12-23"
       ],
-      "quiet": true
+      "extra": 2500,
+      "extra_label": "🚆 Поезд СПб - Москва и еда",
+      "digest": false
     }
   ],
   "combo": {
     "out": "LED-EVN",
     "back": "EVN-LED",
     "min_stay_days": 2,
-    "outs": {
-      "LED-EVN": 0,
-      "SVO-EVN": 2000,
-      "DME-EVN": 2000,
-      "VKO-EVN": 2000
-    },
-    "backs": {
-      "EVN-LED": 0,
-      "EVN-SVO": 2000,
-      "EVN-DME": 2000,
-      "EVN-VKO": 2000
-    },
-    "hot_rub": 15000,
-    "fire_rub": 10000
+    "outs": [
+      "LED-EVN",
+      "SVO-EVN",
+      "DME-EVN",
+      "VKO-EVN"
+    ],
+    "backs": [
+      "EVN-LED",
+      "EVN-SVO",
+      "EVN-DME",
+      "EVN-VKO"
+    ],
+    "hot_rub": 30000,
+    "fire_rub": 20000
   },
-  "hot_rub": 10000,
-  "fire_rub": 7000,
+  "hot_rub": 15000,
+  "fire_rub": 10000,
   "anomaly": {
     "origins": [
       "LED",
@@ -152,7 +168,8 @@
       "LED-KGD",
       "LED-EVN",
       "LED-TBS",
-      "LED-LWN"
+      "LED-LWN",
+      "MOW-EVN"
     ],
     "priority_ratio": 0.5,
     "ratio": 0.4,
@@ -183,8 +200,12 @@
         "fire": 2000
       },
       "LED-EVN": {
-        "send": 8000,
-        "fire": 6000
+        "send": 15000,
+        "fire": 10000
+      },
+      "MOW-EVN": {
+        "send": 12500,
+        "fire": 7500
       }
     },
     "visa_free": [
@@ -272,5 +293,6 @@
       "ratio": 0.2,
       "discount": 0.8
     }
-  }
+  },
+  "pax": 2
 }

@@ -116,7 +116,7 @@ VISA = {"free": "🛂 Виза: не нужна", "visa": "🛂 Виза: воз
 
 
 def deal(kind, origin, dest, date_iso, price, *, norm=None, prev=None, stops=None, dep_time=None,
-         carrier=None, visa=None, links=(), found_at=None, cities=None, priority=False, cache_note=False):
+         carrier=None, visa=None, links=(), found_at=None, cities=None, priority=False, cache_note=False, cost_lines=()):
     """Один билет в одну сторону: аномалия, низкая цена, падение цены."""
     head = [STATUS[kind], ""]
     names = [city_of(origin, cities), city_of(dest, cities)]
@@ -132,6 +132,7 @@ def deal(kind, origin, dest, date_iso, price, *, norm=None, prev=None, stops=Non
         if line:
             main.append(line)
 
+    cost_block = [esc(x) for x in cost_lines]
     cmp_block = []
     if norm and norm > price:
         pct = round(price / norm * 100)
@@ -143,7 +144,7 @@ def deal(kind, origin, dest, date_iso, price, *, norm=None, prev=None, stops=Non
     if cache_note:
         note = "Данные из кэша: проверьте цену и визу перед покупкой" if visa == "free" else "Данные из кэша: проверьте цену перед покупкой"
     footer = [f"<i>{esc(p)}</i>" for p in (found_text(found_at), note) if p]
-    return _join([head[:1], route, main, cmp_block, links_block(links), footer])
+    return _join([head[:1], route, main, cost_block, cmp_block, links_block(links), footer])
 
 
 def roundtrip(kind, out, back, total, *, links_out=(), links_back=(), cities=None, prev=None, note=None):

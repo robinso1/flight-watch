@@ -153,13 +153,14 @@ def append_csv(row):
 
 
 def best_combo(cfg, cheapest):
-    """Лучшая связка туда-обратно. Плечи берутся из любых маршрутов списков outs/backs;
-    у каждого маршрута своя надбавка в рублях (дорога до Москвы и обратно)."""
+    """Лучшая связка туда-обратно среди маршрутов из списков outs и backs.
+    К цене каждого плеча добавляется надбавка маршрута (дорога и еда в пути)."""
     c = cfg.get("combo")
     if not c:
         return None
-    outs = c.get("outs") or {c["out"]: 0}
-    backs = c.get("backs") or {c["back"]: 0}
+    extras = {r["name"]: r.get("extra", 0) for r in cfg["routes"]}
+    outs = c.get("outs") or [c["out"]]
+    backs = c.get("backs") or [c["back"]]
     best = None
     for k_out, o in cheapest.items():
         r_out, d_out = k_out.split("|")
@@ -172,7 +173,7 @@ def best_combo(cfg, cheapest):
             gap = (date.fromisoformat(d_back) - date.fromisoformat(d_out)).days
             if gap < c.get("min_stay_days", 0):
                 continue
-            extra = outs[r_out] + backs[r_back]
+            extra = extras.get(r_out, 0) + extras.get(r_back, 0)
             total = o["price"] + b["price"] + extra
             if best is None or total < best["total"]:
                 best = {"total": total, "extra": extra, "out_day": d_out, "back_day": d_back, "out": o, "back": b,
@@ -229,6 +230,18 @@ def link_pairs(cfg, origin, dest, day, airlines=""):
     return pairs
 
 
+def cost_lines(cfg, r, eff):
+    """Строки про полную стоимость на человека и на всех, если задана надбавка или число людей."""
+    pax = cfg.get("pax", 1)
+    extra = r.get("extra", 0)
+    lines = []
+    if extra:
+        lines.append(f"{r.get('extra_label', 'Дорога и еда')}: +{msg.money(extra)}")
+    if extra or pax > 1:
+        lines.append(f"💳 Итого: {msg.money(eff)} на человека" + (f", {msg.money(eff * pax)} на двоих" if pax == 2 else f", {msg.money(eff * pax)} на {pax}" if pax > 1 else ""))
+    return lines
+
+
 def leg(day, o, origin, dest):
     return {"origin": origin, "dest": dest, "date": day, "price": o["price"], "carrier": o["airlines"],
             "dep_time": o["dep"][-5:], "stops": o["stops"]}
@@ -282,25 +295,28 @@ def run(cfg):
             cheapest[key] = best
             k = keys.setdefault(key, {"min": None, "last": None, "alerted": None})
             alerts, hot_alerts = [], []
+            extra = r.get("extra", 0)
+            eff = best["price"] + extra  # цена с дорогой и едой, на одного
             prev_min = k["min"]
             if k["min"] is None:
-                k["min"] = best["price"]
-            elif best["price"] < k["min"] * drop:
+                k["min"] = eff
+            elif eff < k["min"] * drop:
                 alerts.append("drop")
-            k["min"] = min(k["min"], best["price"])
-            lvl = hot_level(best["price"], cfg.get("hot_rub"), cfg.get("fire_rub"))
-            if lvl and (lvl > k.get("lvl", 0) or k["alerted"] is None or best["price"] < k["alerted"] * drop):
+            k["min"] = min(k["min"], eff)
+            lvl = hot_level(eff, cfg.get("hot_rub"), cfg.get("fire_rub"))
+            if lvl and (lvl > k.get("lvl", 0) or k["alerted"] is None or eff < k["alerted"] * drop):
                 hot_alerts.append(lvl)
-                k["alerted"] = best["price"]
+                k["alerted"] = eff
                 k["lvl"] = lvl
             if k["last"] != best["price"]:
                 append_csv([stamp, r["name"], day, best["price"], best["airlines"], best["dep"], best["stops"]])
                 k["last"] = best["price"]
-            if not r.get("quiet") and (hot_alerts or (alerts and not first_run)):
+            if hot_alerts or (alerts and not first_run):
                 kind = ("great" if hot_alerts[0] == 2 else "low") if hot_alerts else "drop"
                 tg_send(
                     msg.deal(kind, r["origin"], r["dest"], day, best["price"], prev=prev_min if alerts else None,
                              stops=best["stops"], dep_time=best["dep"][-5:], carrier=best["airlines"],
+                             cost_lines=cost_lines(cfg, r, eff),
                              links=link_pairs(cfg, r["origin"], r["dest"], day, best["airlines"])),
                     html=True,
                 )
@@ -341,8 +357,9 @@ def run(cfg):
             r_back = next(r for r in cfg["routes"] if r["name"] == combo["back_route"])
             kind = ("great" if hot_c == 2 else "low") if hot_c else "drop"
             note = None
-            if combo["extra"]:
-                note = f"🚆 В сумму заложена дорога СПб - Москва: {money(combo['extra'])}"
+            pax = cfg.get("pax", 1)
+            note = (f"Дорога и еда в пути заложены: {money(combo['extra'])}\n" if combo["extra"] else "") + \
+                   f"💳 Итого {money(combo['total'])} на человека" + (f", {money(combo['total'] * pax)} на {pax}" if pax > 1 else "")
             tg_send(
                 msg.roundtrip(
                     kind,
@@ -368,7 +385,7 @@ def run(cfg):
         head = "🟢 <b>МОНИТОРИНГ ЗАПУЩЕН</b>" if first_run else "📊 <b>СВОДКА</b>"
         routes = []
         for r in cfg["routes"]:
-            if r.get("quiet"):
+            if not r.get("digest", True):
                 continue
             opts = []
             for key, o in cheapest.items():
