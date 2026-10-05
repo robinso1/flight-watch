@@ -12,18 +12,18 @@
   },
   "TBS-LED|2026-12-16": {
    "alerted": null,
-   "last": 42794,
+   "last": 43054,
    "min": 42753
   },
   "TBS-LED|2026-12-18": {
    "alerted": null,
-   "last": 42794,
+   "last": 43054,
    "min": 42753
   }
  },
  "meta": {
   "combo_min": 31767,
-  "digest_date": "2026-10-04",
+  "digest_date": "2026-10-05",
   "empty_streak": 0,
   "fail_streak": 0,
   "started": true
