@@ -153,24 +153,30 @@ def append_csv(row):
 
 
 def best_combo(cfg, cheapest):
+    """Лучшая связка туда-обратно. Плечи берутся из любых маршрутов списков outs/backs;
+    у каждого маршрута своя надбавка в рублях (дорога до Москвы и обратно)."""
     c = cfg.get("combo")
     if not c:
         return None
+    outs = c.get("outs") or {c["out"]: 0}
+    backs = c.get("backs") or {c["back"]: 0}
     best = None
     for k_out, o in cheapest.items():
         r_out, d_out = k_out.split("|")
-        if r_out != c["out"]:
+        if r_out not in outs:
             continue
         for k_back, b in cheapest.items():
             r_back, d_back = k_back.split("|")
-            if r_back != c["back"]:
+            if r_back not in backs:
                 continue
             gap = (date.fromisoformat(d_back) - date.fromisoformat(d_out)).days
             if gap < c.get("min_stay_days", 0):
                 continue
-            total = o["price"] + b["price"]
+            extra = outs[r_out] + backs[r_back]
+            total = o["price"] + b["price"] + extra
             if best is None or total < best["total"]:
-                best = {"total": total, "out_day": d_out, "back_day": d_back, "out": o, "back": b}
+                best = {"total": total, "extra": extra, "out_day": d_out, "back_day": d_back, "out": o, "back": b,
+                        "out_route": r_out, "back_route": r_back}
     return best
 
 
@@ -290,7 +296,7 @@ def run(cfg):
             if k["last"] != best["price"]:
                 append_csv([stamp, r["name"], day, best["price"], best["airlines"], best["dep"], best["stops"]])
                 k["last"] = best["price"]
-            if hot_alerts or (alerts and not first_run):
+            if not r.get("quiet") and (hot_alerts or (alerts and not first_run)):
                 kind = ("great" if hot_alerts[0] == 2 else "low") if hot_alerts else "drop"
                 tg_send(
                     msg.deal(kind, r["origin"], r["dest"], day, best["price"], prev=prev_min if alerts else None,
@@ -331,10 +337,12 @@ def run(cfg):
         prev_combo = cm
         meta["combo_min"] = combo["total"] if cm is None else min(cm, combo["total"])
         if hot_c or (new_min and not first_run):
-            c = cfg["combo"]
-            r_out = next(r for r in cfg["routes"] if r["name"] == c["out"])
-            r_back = next(r for r in cfg["routes"] if r["name"] == c["back"])
+            r_out = next(r for r in cfg["routes"] if r["name"] == combo["out_route"])
+            r_back = next(r for r in cfg["routes"] if r["name"] == combo["back_route"])
             kind = ("great" if hot_c == 2 else "low") if hot_c else "drop"
+            note = None
+            if combo["extra"]:
+                note = f"🚆 В сумму заложена дорога СПб - Москва: {money(combo['extra'])}"
             tg_send(
                 msg.roundtrip(
                     kind,
@@ -344,6 +352,7 @@ def run(cfg):
                     links_out=link_pairs(cfg, r_out["origin"], r_out["dest"], combo["out_day"], combo["out"]["airlines"]),
                     links_back=link_pairs(cfg, r_back["origin"], r_back["dest"], combo["back_day"], combo["back"]["airlines"]),
                     prev=prev_combo if new_min else None,
+                    note=note,
                 ),
                 html=True,
             )
@@ -359,6 +368,8 @@ def run(cfg):
         head = "🟢 <b>МОНИТОРИНГ ЗАПУЩЕН</b>" if first_run else "📊 <b>СВОДКА</b>"
         routes = []
         for r in cfg["routes"]:
+            if r.get("quiet"):
+                continue
             opts = []
             for key, o in cheapest.items():
                 rname, day = key.split("|")
@@ -390,16 +401,21 @@ def selftest():
     DATA = Path(tempfile.mkdtemp())
     cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
     cfg["hot_rub"], cfg["fire_rub"] = 10000, 7000
-    cfg["combo"]["hot_rub"], cfg["combo"]["fire_rub"] = 20000, 14000
+    cfg["combo"]["hot_rub"], cfg["combo"]["fire_rub"] = 15000, 11000
     for r in cfg["routes"]:
         r["dates"] = [(now().date() + timedelta(days=d)).isoformat() for d in (60, 61)]
-    globals()["fetch_offers"] = lambda cfg, o, d, day: FAKE.pop(0)(o, d, day)
-    mk = lambda p, a="Россия": [{"price": p, "airlines": a, "dep": "15.12 18:55", "stops": 0}]
-    FAKE[:] = [lambda o, d, day, p=p: mk(p) for p in (12000, 11500, 13000, 12500)]
-    print("== проход 1: должно прийти только стартовое сообщение ==")
+    prices = {"LED-EVN": 7000, "EVN-LED": 8500, "SVO-EVN": 3500, "EVN-SVO": 4200}
+    mode = {"k": 1}
+
+    def fake(cfg, o, d, day):
+        base = prices.get(f"{o}-{d}", 12000) * mode["k"]
+        return [{"price": base, "airlines": "FlyOne Armenia", "dep": "15.12 18:55", "stops": 0}]
+
+    globals()["fetch_offers"] = fake
+    print("== проход 1: только стартовое сообщение ==")
     run(cfg)
-    FAKE[:] = [lambda o, d, day, p=p: mk(p, "FlyOne Armenia") for p in (8000, 11400, 9000, 9500)]
-    print("== проход 2: минимум и порог по EVN-LED, пара ниже порога ==")
+    mode["k"] = 0.9
+    print("== проход 2: цены упали, связка с Москвой должна дать сообщение ==")
     run(cfg)
     print("state:", (DATA / "state.json").read_text()[:300])
     print("csv строк:", len((DATA / "prices.csv").read_text().splitlines()) - 1)

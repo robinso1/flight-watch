@@ -146,7 +146,7 @@ def deal(kind, origin, dest, date_iso, price, *, norm=None, prev=None, stops=Non
     return _join([head[:1], route, main, cmp_block, links_block(links), footer])
 
 
-def roundtrip(kind, out, back, total, *, links_out=(), links_back=(), cities=None, prev=None):
+def roundtrip(kind, out, back, total, *, links_out=(), links_back=(), cities=None, prev=None, note=None):
     """Туда-обратно. out/back: dict(origin, dest, date, price, carrier, dep_time, stops)."""
     same = out["date"] == back["date"]
     cc = lambda c: cc_of(c, cities)
@@ -170,6 +170,9 @@ def roundtrip(kind, out, back, total, *, links_out=(), links_back=(), cities=Non
 
     both_direct = out.get("stops") == 0 and back.get("stops") == 0
     summary = ["──────────────", "🎟️ Прямой рейс в обе стороны"] if both_direct else []
+    if note:
+        summary = summary or ["──────────────"]
+        summary.append(note)
     rows = []
     if links_out or links_back:
         rows = ["🔎 <b>Проверить билет</b>"]
@@ -210,7 +213,8 @@ def digest(head, routes, pair=None, carriers=None, unpriced=None, cities=None, p
         blocks.append(lines)
     if pair:
         blocks.append(["💡 <b>Лучшая пара</b>",
-                       f"{money(pair['total'])} · туда {date_short(pair['out_day'])}, обратно {date_short(pair['back_day'])}"])
+                       f"{money(pair['total'])} · туда {date_short(pair['out_day'])}, обратно {date_short(pair['back_day'])}"
+                       + (f" (с дорогой {money(pair['extra'])})" if pair.get("extra") else "")])
     if unpriced:
         blocks.append(["<i>Рейсы без цены в Google (цена только на сайте перевозчика): " + esc("; ".join(unpriced)) + "</i>"])
     if carriers:

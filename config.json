@@ -48,14 +48,98 @@
         "2026-12-22",
         "2026-12-23"
       ]
+    },
+    {
+      "name": "SVO-EVN",
+      "origin": "SVO",
+      "dest": "EVN",
+      "dates": [
+        "2026-12-15",
+        "2026-12-16",
+        "2026-12-17",
+        "2026-12-18"
+      ],
+      "quiet": true
+    },
+    {
+      "name": "EVN-SVO",
+      "origin": "EVN",
+      "dest": "SVO",
+      "dates": [
+        "2026-12-20",
+        "2026-12-21",
+        "2026-12-22",
+        "2026-12-23"
+      ],
+      "quiet": true
+    },
+    {
+      "name": "DME-EVN",
+      "origin": "DME",
+      "dest": "EVN",
+      "dates": [
+        "2026-12-15",
+        "2026-12-16",
+        "2026-12-17",
+        "2026-12-18"
+      ],
+      "quiet": true
+    },
+    {
+      "name": "EVN-DME",
+      "origin": "EVN",
+      "dest": "DME",
+      "dates": [
+        "2026-12-20",
+        "2026-12-21",
+        "2026-12-22",
+        "2026-12-23"
+      ],
+      "quiet": true
+    },
+    {
+      "name": "VKO-EVN",
+      "origin": "VKO",
+      "dest": "EVN",
+      "dates": [
+        "2026-12-15",
+        "2026-12-16",
+        "2026-12-17",
+        "2026-12-18"
+      ],
+      "quiet": true
+    },
+    {
+      "name": "EVN-VKO",
+      "origin": "EVN",
+      "dest": "VKO",
+      "dates": [
+        "2026-12-20",
+        "2026-12-21",
+        "2026-12-22",
+        "2026-12-23"
+      ],
+      "quiet": true
     }
   ],
   "combo": {
     "out": "LED-EVN",
     "back": "EVN-LED",
     "min_stay_days": 2,
-    "hot_rub": 20000,
-    "fire_rub": 14000
+    "outs": {
+      "LED-EVN": 0,
+      "SVO-EVN": 2000,
+      "DME-EVN": 2000,
+      "VKO-EVN": 2000
+    },
+    "backs": {
+      "EVN-LED": 0,
+      "EVN-SVO": 2000,
+      "EVN-DME": 2000,
+      "EVN-VKO": 2000
+    },
+    "hot_rub": 15000,
+    "fire_rub": 11000
   },
   "hot_rub": 10000,
   "fire_rub": 7000,
