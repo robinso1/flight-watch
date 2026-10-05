@@ -25,6 +25,7 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Проверить цены
         env:
+          PYTHONUNBUFFERED: "1"
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
         run: python watch.py --loop 52 --every 10
