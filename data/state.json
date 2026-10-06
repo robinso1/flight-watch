@@ -1,9 +1,71 @@
 {
  "keys": {
+  "DME-EVN|2026-12-15": {
+   "alerted": 14642,
+   "last": 12142,
+   "lvl": 1,
+   "min": 14642
+  },
+  "DME-EVN|2026-12-16": {
+   "alerted": 14642,
+   "last": 12142,
+   "lvl": 1,
+   "min": 14642
+  },
+  "DME-EVN|2026-12-17": {
+   "alerted": null,
+   "last": 15056,
+   "min": 17556
+  },
+  "DME-EVN|2026-12-18": {
+   "alerted": null,
+   "last": 18941,
+   "min": 21441
+  },
+  "EVN-DME|2026-12-20": {
+   "alerted": null,
+   "last": 18494,
+   "min": 20993
+  },
+  "EVN-DME|2026-12-21": {
+   "alerted": null,
+   "last": 14114,
+   "min": 16613
+  },
+  "EVN-DME|2026-12-22": {
+   "alerted": null,
+   "last": 13141,
+   "min": 15640
+  },
+  "EVN-DME|2026-12-23": {
+   "alerted": null,
+   "last": 13141,
+   "min": 15640
+  },
   "EVN-LED|2026-12-17": {
    "alerted": null,
    "last": 14823,
    "min": 14823
+  },
+  "EVN-VKO|2026-12-20": {
+   "alerted": null,
+   "last": 15087,
+   "min": 17587
+  },
+  "EVN-VKO|2026-12-21": {
+   "alerted": null,
+   "last": 15087,
+   "min": 17587
+  },
+  "EVN-VKO|2026-12-22": {
+   "alerted": null,
+   "last": 13141,
+   "min": 15640
+  },
+  "EVN-VKO|2026-12-23": {
+   "alerted": null,
+   "last": 13141,
+   "min": 15640
   },
   "LED-EVN|2026-12-17": {
    "alerted": null,
@@ -19,10 +81,42 @@
    "alerted": null,
    "last": 43054,
    "min": 42753
+  },
+  "TBS-LED|2026-12-20": {
+   "alerted": null,
+   "last": 43748,
+   "min": 47246
+  },
+  "TBS-LED|2026-12-23": {
+   "alerted": null,
+   "last": 43748,
+   "min": 47246
+  },
+  "VKO-EVN|2026-12-15": {
+   "alerted": 14642,
+   "last": 12142,
+   "lvl": 1,
+   "min": 14642
+  },
+  "VKO-EVN|2026-12-16": {
+   "alerted": 14642,
+   "last": 12142,
+   "lvl": 1,
+   "min": 14642
+  },
+  "VKO-EVN|2026-12-17": {
+   "alerted": null,
+   "last": 15056,
+   "min": 17556
+  },
+  "VKO-EVN|2026-12-18": {
+   "alerted": null,
+   "last": 18941,
+   "min": 21441
   }
  },
  "meta": {
-  "combo_min": 31767,
+  "combo_min": 30282,
   "digest_date": "2026-10-05",
   "empty_streak": 0,
   "fail_streak": 0,
