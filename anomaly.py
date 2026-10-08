@@ -35,6 +35,7 @@ DEFAULTS = {
     "niche": {"dests": [], "ratio": 0.2, "discount": 0.8},  # малопопулярные направления: только очень глубокая скидка
     "strict_origins": {},    # {"MOW": {"ratio": 0.25, "discount": 0.85}}: из этих городов только очень сильные аномалии
     "low_interest": {"dests": [], "max_price": 1500},  # неинтересные внутренние города: только если совсем дёшево
+    "dest_windows": {},      # {"EVN": ["2026-12-15", "2026-12-18"]}: вылеты в это направление вне окна не показываем
     "abs_rub": {},           # {"LED-KGD": {"send": 2000, "fire": 1500}}: абсолютные пороги вместо процентов
     "visa_free": VISA_FREE,
     "origin": "LED",
@@ -121,6 +122,11 @@ def visa_status(dest, cities, c):
     return "free" if info.get("c") in c["visa_free"] else "visa"
 
 
+def in_window(c, dest, d):
+    w = c.get("dest_windows", {}).get(dest)
+    return not w or (w[0] <= d <= w[1])
+
+
 def run(c, token, data_dir, offers, notify):
     today = watch.now().strftime("%Y-%m-%d")
     state_path = data_dir / "anomaly_state.json"
@@ -138,6 +144,8 @@ def run(c, token, data_dir, offers, notify):
         if sig in seen:
             continue
         seen.add(sig)
+        if not in_window(c, o["destination"], o["depart_date"]):
+            continue
         if o.get("actual", True) and (o.get("number_of_changes") or 0) <= c["max_changes"] and o.get("value"):
             good.append(o)
     groups = {}
@@ -251,6 +259,8 @@ def hot_scan(c, token, data_dir, notify):
     found = []
     for origin, o in cand:
         dest, price, date_ = o["destination"], o["price"], o["departure_at"][:10]
+        if not in_window(c, dest, date_):
+            continue
         li = c.get("low_interest", {})
         if dest in li.get("dests", []) and price > li.get("overrides", {}).get(dest, li["max_price"]):
             continue
