@@ -1,0 +1,565 @@
+{
+ "LED|EVN|2026-12-14": [
+  {
+   "price": null,
+   "airlines": "Emirates, Aegean Airlines",
+   "dep": "14.12 23:10",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "14.12 23:20",
+   "stops": 3
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "14.12 23:20",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "14.12 23:20",
+   "stops": 2
+  }
+ ],
+ "LED|EVN|2026-12-15": [],
+ "LED|EVN|2026-12-16": [
+  {
+   "price": 31494,
+   "airlines": "Turkish Airlines",
+   "dep": "16.12 06:30",
+   "stops": 1
+  },
+  {
+   "price": 41234,
+   "airlines": "Turkish Airlines",
+   "dep": "16.12 13:55",
+   "stops": 1
+  },
+  {
+   "price": null,
+   "airlines": "Emirates, Aegean Airlines",
+   "dep": "16.12 23:10",
+   "stops": 2
+  }
+ ],
+ "LED|EVN|2026-12-17": [
+  {
+   "price": null,
+   "airlines": "Emirates, Aegean Airlines",
+   "dep": "17.12 23:10",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "Emirates, Aegean Airlines",
+   "dep": "17.12 23:10",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "17.12 23:20",
+   "stops": 3
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "17.12 23:20",
+   "stops": 3
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "17.12 23:20",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "17.12 23:20",
+   "stops": 2
+  }
+ ],
+ "LED|EVN|2026-12-18": [
+  {
+   "price": null,
+   "airlines": "Etihad Airways, Middle East Airlines",
+   "dep": "18.12 12:00",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "18.12 23:20",
+   "stops": 3
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "18.12 23:20",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "18.12 23:20",
+   "stops": 2
+  }
+ ],
+ "EVN|LED|2026-12-19": [
+  {
+   "price": 103017,
+   "airlines": "Flydubai, Emirates",
+   "dep": "19.12 12:35",
+   "stops": 1
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "19.12 03:55",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "Aegean Airlines, Emirates",
+   "dep": "19.12 05:20",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "Aegean Airlines, Emirates",
+   "dep": "19.12 05:20",
+   "stops": 2
+  }
+ ],
+ "EVN|LED|2026-12-20": [
+  {
+   "price": 34203,
+   "airlines": "Turkish Airlines",
+   "dep": "20.12 03:55",
+   "stops": 1
+  },
+  {
+   "price": 39283,
+   "airlines": "Turkish Airlines",
+   "dep": "20.12 08:50",
+   "stops": 1
+  },
+  {
+   "price": 100632,
+   "airlines": "Flydubai, Emirates",
+   "dep": "20.12 12:35",
+   "stops": 1
+  },
+  {
+   "price": null,
+   "airlines": "ЮТэйр",
+   "dep": "20.12 03:55",
+   "stops": 2
+  }
+ ],
+ "EVN|LED|2026-12-21": [],
+ "EVN|LED|2026-12-22": [],
+ "EVN|LED|2026-12-23": [
+  {
+   "price": 34203,
+   "airlines": "Turkish Airlines",
+   "dep": "23.12 03:55",
+   "stops": 1
+  },
+  {
+   "price": 39283,
+   "airlines": "Turkish Airlines",
+   "dep": "23.12 08:50",
+   "stops": 1
+  },
+  {
+   "price": 100632,
+   "airlines": "Flydubai, Emirates",
+   "dep": "23.12 12:35",
+   "stops": 1
+  },
+  {
+   "price": null,
+   "airlines": "Aegean Airlines, Emirates",
+   "dep": "23.12 05:20",
+   "stops": 2
+  }
+ ],
+ "SVO|EVN|2026-12-14": [
+  {
+   "price": 135258,
+   "airlines": "Etihad Airways, Air Arabia",
+   "dep": "14.12 23:50",
+   "stops": 1
+  }
+ ],
+ "SVO|EVN|2026-12-15": [
+  {
+   "price": 135258,
+   "airlines": "Etihad Airways, Air Arabia",
+   "dep": "15.12 23:50",
+   "stops": 1
+  },
+  {
+   "price": null,
+   "airlines": "Etihad Airways, Middle East Airlines",
+   "dep": "15.12 23:50",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "Etihad Airways, Middle East Airlines",
+   "dep": "15.12 23:50",
+   "stops": 2
+  }
+ ],
+ "SVO|EVN|2026-12-16": [],
+ "SVO|EVN|2026-12-17": [
+  {
+   "price": 146707,
+   "airlines": "Etihad Airways, Air Arabia",
+   "dep": "17.12 23:50",
+   "stops": 1
+  }
+ ],
+ "SVO|EVN|2026-12-18": [
+  {
+   "price": 141245,
+   "airlines": "China Southern Airlines",
+   "dep": "18.12 20:20",
+   "stops": 1
+  },
+  {
+   "price": 146707,
+   "airlines": "Etihad Airways, Air Arabia",
+   "dep": "18.12 23:50",
+   "stops": 1
+  }
+ ],
+ "EVN|SVO|2026-12-20": [],
+ "EVN|SVO|2026-12-21": [],
+ "EVN|SVO|2026-12-22": [
+  {
+   "price": 98767,
+   "airlines": "Air Arabia, Etihad Airways",
+   "dep": "22.12 18:35",
+   "stops": 1
+  },
+  {
+   "price": 720355,
+   "airlines": "LOT, Etihad Airways",
+   "dep": "22.12 05:10",
+   "stops": 2
+  }
+ ],
+ "EVN|SVO|2026-12-23": [
+  {
+   "price": null,
+   "airlines": "China Southern Airlines",
+   "dep": "23.12 00:55",
+   "stops": 1
+  }
+ ],
+ "DME|EVN|2026-12-14": [],
+ "DME|EVN|2026-12-15": [
+  {
+   "price": 10234,
+   "airlines": "FLYONE Armenia",
+   "dep": "15.12 21:00",
+   "stops": 0
+  },
+  {
+   "price": null,
+   "airlines": "Уральские авиалинии",
+   "dep": "15.12 20:45",
+   "stops": 0
+  },
+  {
+   "price": null,
+   "airlines": "Emirates, Flydubai, LOT",
+   "dep": "15.12 23:00",
+   "stops": 2
+  }
+ ],
+ "DME|EVN|2026-12-16": [],
+ "DME|EVN|2026-12-17": [
+  {
+   "price": 32650,
+   "airlines": "FLYONE Armenia",
+   "dep": "17.12 21:00",
+   "stops": 0
+  },
+  {
+   "price": null,
+   "airlines": "Уральские авиалинии",
+   "dep": "17.12 20:45",
+   "stops": 0
+  },
+  {
+   "price": null,
+   "airlines": "Emirates, Aegean Airlines",
+   "dep": "17.12 23:00",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "Emirates, Aegean Airlines",
+   "dep": "17.12 23:00",
+   "stops": 2
+  }
+ ],
+ "DME|EVN|2026-12-18": [
+  {
+   "price": 22904,
+   "airlines": "FLYONE Armenia",
+   "dep": "18.12 21:00",
+   "stops": 0
+  },
+  {
+   "price": null,
+   "airlines": "Уральские авиалинии",
+   "dep": "18.12 20:45",
+   "stops": 0
+  },
+  {
+   "price": null,
+   "airlines": "Emirates, Flydubai, LOT",
+   "dep": "18.12 23:00",
+   "stops": 2
+  }
+ ],
+ "EVN|DME|2026-12-20": [
+  {
+   "price": 101165,
+   "airlines": "Flydubai, Emirates",
+   "dep": "20.12 12:35",
+   "stops": 1
+  },
+  {
+   "price": 428920,
+   "airlines": "Lufthansa, EgyptAir",
+   "dep": "20.12 05:05",
+   "stops": 2
+  },
+  {
+   "price": 428920,
+   "airlines": "Lufthansa, EgyptAir",
+   "dep": "20.12 05:05",
+   "stops": 2
+  },
+  {
+   "price": 454517,
+   "airlines": "Air Arabia, Etihad Airways, Ethiopian Airlines",
+   "dep": "20.12 18:35",
+   "stops": 2
+  }
+ ],
+ "EVN|DME|2026-12-21": [
+  {
+   "price": 22855,
+   "airlines": "FLYONE Armenia",
+   "dep": "21.12 17:40",
+   "stops": 0
+  },
+  {
+   "price": 101165,
+   "airlines": "Flydubai, Emirates",
+   "dep": "21.12 12:35",
+   "stops": 1
+  },
+  {
+   "price": 290648,
+   "airlines": "Lufthansa, EgyptAir",
+   "dep": "21.12 05:05",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "Уральские авиалинии",
+   "dep": "21.12 02:25",
+   "stops": 0
+  }
+ ],
+ "EVN|DME|2026-12-22": [
+  {
+   "price": 101165,
+   "airlines": "Flydubai, Emirates",
+   "dep": "22.12 12:35",
+   "stops": 1
+  },
+  {
+   "price": 345854,
+   "airlines": "Air Arabia, Etihad Airways, EgyptAir",
+   "dep": "22.12 18:35",
+   "stops": 2
+  },
+  {
+   "price": 454517,
+   "airlines": "Air Arabia, Etihad Airways, Ethiopian Airlines",
+   "dep": "22.12 18:35",
+   "stops": 2
+  }
+ ],
+ "EVN|DME|2026-12-23": [
+  {
+   "price": 16047,
+   "airlines": "FLYONE Armenia",
+   "dep": "23.12 17:40",
+   "stops": 0
+  },
+  {
+   "price": 101165,
+   "airlines": "Flydubai, Emirates",
+   "dep": "23.12 12:35",
+   "stops": 1
+  },
+  {
+   "price": 343374,
+   "airlines": "Air Arabia, Etihad Airways, EgyptAir",
+   "dep": "23.12 13:15",
+   "stops": 2
+  },
+  {
+   "price": null,
+   "airlines": "Уральские авиалинии",
+   "dep": "23.12 02:25",
+   "stops": 0
+  }
+ ],
+ "VKO|EVN|2026-12-14": [
+  {
+   "price": 62591,
+   "airlines": "Turkish Airlines",
+   "dep": "14.12 14:05",
+   "stops": 1
+  },
+  {
+   "price": 62591,
+   "airlines": "Turkish Airlines",
+   "dep": "14.12 20:15",
+   "stops": 1
+  }
+ ],
+ "VKO|EVN|2026-12-15": [
+  {
+   "price": 62591,
+   "airlines": "Turkish Airlines",
+   "dep": "15.12 20:15",
+   "stops": 1
+  },
+  {
+   "price": 77491,
+   "airlines": "Turkish Airlines",
+   "dep": "15.12 14:05",
+   "stops": 1
+  }
+ ],
+ "VKO|EVN|2026-12-16": [
+  {
+   "price": 62591,
+   "airlines": "Turkish Airlines",
+   "dep": "16.12 14:05",
+   "stops": 1
+  },
+  {
+   "price": 62591,
+   "airlines": "Turkish Airlines",
+   "dep": "16.12 20:15",
+   "stops": 1
+  }
+ ],
+ "VKO|EVN|2026-12-17": [
+  {
+   "price": 32650,
+   "airlines": "FLYONE Armenia",
+   "dep": "17.12 02:50",
+   "stops": 0
+  },
+  {
+   "price": 36548,
+   "airlines": "FLYONE Armenia",
+   "dep": "17.12 09:50",
+   "stops": 0
+  },
+  {
+   "price": 62591,
+   "airlines": "Turkish Airlines",
+   "dep": "17.12 14:05",
+   "stops": 1
+  },
+  {
+   "price": 77491,
+   "airlines": "Turkish Airlines",
+   "dep": "17.12 20:15",
+   "stops": 1
+  }
+ ],
+ "VKO|EVN|2026-12-18": [
+  {
+   "price": 77491,
+   "airlines": "Turkish Airlines",
+   "dep": "18.12 02:05",
+   "stops": 1
+  },
+  {
+   "price": 91436,
+   "airlines": "Turkish Airlines",
+   "dep": "18.12 14:05",
+   "stops": 1
+  },
+  {
+   "price": 91436,
+   "airlines": "Turkish Airlines",
+   "dep": "18.12 20:15",
+   "stops": 1
+  }
+ ],
+ "EVN|VKO|2026-12-20": [
+  {
+   "price": 39205,
+   "airlines": "Turkish Airlines",
+   "dep": "20.12 08:50",
+   "stops": 1
+  },
+  {
+   "price": 100553,
+   "airlines": "Flydubai",
+   "dep": "20.12 12:35",
+   "stops": 1
+  }
+ ],
+ "EVN|VKO|2026-12-21": [
+  {
+   "price": 39205,
+   "airlines": "Turkish Airlines",
+   "dep": "21.12 08:50",
+   "stops": 1
+  },
+  {
+   "price": 100553,
+   "airlines": "Flydubai",
+   "dep": "21.12 09:40",
+   "stops": 1
+  }
+ ],
+ "EVN|VKO|2026-12-22": [],
+ "EVN|VKO|2026-12-23": [
+  {
+   "price": 39205,
+   "airlines": "Turkish Airlines",
+   "dep": "23.12 08:50",
+   "stops": 1
+  },
+  {
+   "price": 100553,
+   "airlines": "Flydubai",
+   "dep": "23.12 09:40",
+   "stops": 1
+  }
+ ]
+}
