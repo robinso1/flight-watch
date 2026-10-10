@@ -1,6 +1,9 @@
 name: scan-once
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - scan_all.py
 permissions:
   contents: write
 jobs:

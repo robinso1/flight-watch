@@ -27,3 +27,4 @@ for j in jobs:
     print(k, len(res[k]) if isinstance(res[k], list) else res[k], flush=True)
 watch.DATA.mkdir(exist_ok=True)
 (watch.DATA / "scan.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+# run 1
