@@ -22,3 +22,4 @@ try:
 except BaseException:
     os.makedirs('data', exist_ok=True)
     json.dump({'fatal': traceback.format_exc()[-1500:]}, open('data/tp.json','w'), ensure_ascii=False)
+# r3
