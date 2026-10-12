@@ -2,13 +2,13 @@
  "keys": {
   "DME-EVN|2026-12-15": {
    "alerted": 12734,
-   "last": 12167,
+   "last": 11193,
    "lvl": 1,
    "min": 12734
   },
   "DME-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 15087,
+   "last": 16060,
    "lvl": 1,
    "min": 14642
   },
@@ -24,22 +24,22 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 34540,
+   "last": 34155,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 22865,
+   "last": 22610,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 17027,
+   "last": 16837,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 16054,
+   "last": 16837,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 28702,
+   "last": 28383,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 22865,
+   "last": 22610,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 15081,
+   "last": 15875,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 16054,
+   "last": 15875,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,8 +74,8 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 48205,
-   "min": 51491
+   "last": 47668,
+   "min": 50980
   },
   "TBS-LED|2026-12-16": {
    "alerted": null,
@@ -89,17 +89,17 @@
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 43291,
-   "min": 46492
+   "last": 42809,
+   "min": 46309
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 43291,
-   "min": 46492
+   "last": 42809,
+   "min": 46309
   },
   "VKO-EVN|2026-12-15": {
    "alerted": 12734,
-   "last": 12167,
+   "last": 11193,
    "lvl": 1,
    "min": 12734
   },
@@ -124,7 +124,7 @@
   "combo_alerted": 28409,
   "combo_lvl": 1,
   "combo_min": 28358,
-  "digest_date": "2026-10-11",
+  "digest_date": "2026-10-12",
   "empty_streak": 0,
   "fail_streak": 0,
   "started": true
