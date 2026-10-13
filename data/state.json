@@ -2,44 +2,44 @@
  "keys": {
   "DME-EVN|2026-12-15": {
    "alerted": 12734,
-   "last": 11193,
+   "last": 11951,
    "lvl": 1,
    "min": 12734
   },
   "DME-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 16060,
+   "last": 15775,
    "lvl": 1,
    "min": 14642
   },
   "DME-EVN|2026-12-17": {
    "alerted": null,
-   "last": 32607,
+   "last": 32029,
    "min": 17556
   },
   "DME-EVN|2026-12-18": {
    "alerted": null,
-   "last": 26767,
+   "last": 26292,
    "min": 21441
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 34097,
+   "last": 34018,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 24492,
+   "last": 24436,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 16809,
+   "last": 16770,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 16809,
+   "last": 16770,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 28334,
+   "last": 28269,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 22571,
+   "last": 24436,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 15848,
+   "last": 15812,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 15848,
+   "last": 15812,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,7 +74,7 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 47557,
+   "last": 47555,
    "min": 50980
   },
   "TBS-LED|2026-12-16": {
@@ -99,24 +99,24 @@
   },
   "VKO-EVN|2026-12-15": {
    "alerted": 12734,
-   "last": 12167,
+   "last": 11951,
    "lvl": 1,
    "min": 12734
   },
   "VKO-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 15087,
+   "last": 15775,
    "lvl": 1,
    "min": 14642
   },
   "VKO-EVN|2026-12-17": {
    "alerted": null,
-   "last": 32607,
+   "last": 32029,
    "min": 17556
   },
   "VKO-EVN|2026-12-18": {
    "alerted": null,
-   "last": 26767,
+   "last": 26292,
    "min": 21441
   }
  },
