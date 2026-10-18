@@ -19,7 +19,7 @@
   },
   "DME-EVN|2026-12-18": {
    "alerted": null,
-   "last": 26344,
+   "last": 24428,
    "min": 21441
   },
   "EVN-DME|2026-12-20": {
@@ -39,7 +39,7 @@
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 18302,
+   "last": 20228,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -124,7 +124,7 @@
   "combo_alerted": 28409,
   "combo_lvl": 1,
   "combo_min": 28358,
-  "digest_date": "2026-10-17",
+  "digest_date": "2026-10-18",
   "empty_streak": 0,
   "fail_streak": 0,
   "started": true
