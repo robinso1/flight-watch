@@ -19,27 +19,27 @@
   },
   "DME-EVN|2026-12-18": {
    "alerted": null,
-   "last": 24109,
+   "last": 22219,
    "min": 21441
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 31788,
+   "last": 31803,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 27992,
+   "last": 28006,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 19927,
+   "last": 19936,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 16606,
+   "last": 16614,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 26094,
+   "last": 26107,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 24197,
+   "last": 24208,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 18029,
+   "last": 18038,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 14708,
+   "last": 14715,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,8 +74,8 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 47056,
-   "min": 50488
+   "last": 46967,
+   "min": 50467
   },
   "TBS-LED|2026-12-16": {
    "alerted": null,
@@ -89,12 +89,12 @@
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 42236,
+   "last": 42157,
    "min": 45549
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 42236,
+   "last": 42157,
    "min": 45549
   },
   "VKO-EVN|2026-12-15": {
@@ -105,18 +105,18 @@
   },
   "VKO-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 13709,
+   "last": 14655,
    "lvl": 1,
    "min": 14642
   },
   "VKO-EVN|2026-12-17": {
    "alerted": null,
-   "last": 29782,
+   "last": 27891,
    "min": 17556
   },
   "VKO-EVN|2026-12-18": {
    "alerted": null,
-   "last": 26000,
+   "last": 24109,
    "min": 21441
   }
  },
@@ -124,7 +124,7 @@
   "combo_alerted": 28409,
   "combo_lvl": 1,
   "combo_min": 28358,
-  "digest_date": "2026-10-19",
+  "digest_date": "2026-10-20",
   "empty_streak": 0,
   "fail_streak": 0,
   "started": true
