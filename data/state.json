@@ -8,38 +8,38 @@
   },
   "DME-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 13517,
+   "last": 16314,
    "lvl": 1,
    "min": 14642
   },
   "DME-EVN|2026-12-17": {
    "alerted": null,
-   "last": 27501,
+   "last": 25637,
    "min": 17556
   },
   "DME-EVN|2026-12-18": {
    "alerted": null,
-   "last": 23772,
+   "last": 21908,
    "min": 21441
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 29641,
+   "last": 29185,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 27759,
+   "last": 27332,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 19761,
+   "last": 19457,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 16468,
+   "last": 17604,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 25877,
+   "last": 25479,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 23996,
+   "last": 23626,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 17879,
+   "last": 19457,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 16468,
+   "last": 14361,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,8 +74,8 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 46575,
-   "min": 49587
+   "last": 45747,
+   "min": 49247
   },
   "TBS-LED|2026-12-16": {
    "alerted": null,
@@ -89,13 +89,13 @@
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 41803,
-   "min": 44868
+   "last": 41160,
+   "min": 44563
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 41803,
-   "min": 44868
+   "last": 41160,
+   "min": 44563
   },
   "VKO-EVN|2026-12-15": {
    "alerted": 12288,
@@ -105,7 +105,7 @@
   },
   "VKO-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 13517,
+   "last": 14450,
    "lvl": 1,
    "min": 14642
   },
@@ -124,7 +124,7 @@
   "combo_alerted": 28409,
   "combo_lvl": 1,
   "combo_min": 28358,
-  "digest_date": "2026-10-22",
+  "digest_date": "2026-10-23",
   "empty_streak": 0,
   "fail_streak": 0,
   "started": true
