@@ -2,7 +2,7 @@
  "keys": {
   "DME-EVN|2026-12-15": {
    "alerted": 12734,
-   "last": 12585,
+   "last": 10721,
    "lvl": 1,
    "min": 12559
   },
@@ -29,12 +29,12 @@
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 29076,
+   "last": 27230,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 17538,
+   "last": 19384,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
