@@ -2,7 +2,7 @@
  "keys": {
   "DME-EVN|2026-12-15": {
    "alerted": 5722,
-   "last": 3222,
+   "last": 11507,
    "lvl": 2,
    "min": 5722
   },
@@ -14,7 +14,7 @@
   },
   "DME-EVN|2026-12-17": {
    "alerted": null,
-   "last": 25315,
+   "last": 27157,
    "min": 17556
   },
   "DME-EVN|2026-12-18": {
@@ -24,22 +24,22 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 30839,
+   "last": 30859,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 25316,
+   "last": 25332,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 19332,
+   "last": 19345,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 17491,
+   "last": 16121,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 23475,
+   "last": 27175,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 25316,
+   "last": 25332,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 17491,
+   "last": 17502,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 14269,
+   "last": 14278,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,8 +74,8 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 25109,
-   "min": 28609
+   "last": 25048,
+   "min": 28547
   },
   "TBS-LED|2026-12-16": {
    "alerted": null,
@@ -89,13 +89,13 @@
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 24176,
-   "min": 27676
+   "last": 24132,
+   "min": 27632
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 40983,
-   "min": 44435
+   "last": 40909,
+   "min": 44409
   },
   "VKO-EVN|2026-12-15": {
    "alerted": 5722,
