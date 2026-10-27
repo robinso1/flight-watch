@@ -1,109 +1,109 @@
 {
  "EVN-LED|2026-12-20": {
   "airline": "PC",
-  "price": 19205,
+  "price": 18865,
   "transfers": 1,
   "ts": "2026-12-20T04:15:00+04:00"
  },
  "EVN-LED|2026-12-21": {
   "airline": "3F",
-  "price": 23362,
+  "price": 24681,
   "transfers": 2,
   "ts": "2026-12-21T11:50:00+04:00"
  },
  "EVN-LED|2026-12-22": {
   "airline": "PC",
-  "price": 17266,
+  "price": 17017,
   "transfers": 1,
   "ts": "2026-12-22T04:15:00+04:00"
  },
  "EVN-LED|2026-12-23": {
-  "airline": "PC",
-  "price": 15079,
+  "airline": "UT",
+  "price": 16811,
   "transfers": 1,
-  "ts": "2026-12-23T04:15:00+04:00"
+  "ts": "2026-12-23T03:55:00+04:00"
  },
  "EVN-MOW|2026-12-20": {
   "airline": "PC",
-  "price": 17289,
+  "price": 17170,
   "transfers": 1,
   "ts": "2026-12-20T04:15:00+04:00"
  },
  "EVN-MOW|2026-12-21": {
   "airline": "3F",
-  "price": 19338,
+  "price": 19265,
   "transfers": 1,
   "ts": "2026-12-21T11:50:00+04:00"
  },
  "EVN-MOW|2026-12-22": {
   "airline": "A4",
-  "price": 14971,
+  "price": 14925,
   "transfers": 1,
   "ts": "2026-12-22T11:00:00+04:00"
  },
  "EVN-MOW|2026-12-23": {
   "airline": "UT",
-  "price": 13745,
+  "price": 12026,
   "transfers": 0,
   "ts": "2026-12-23T03:55:00+04:00"
  },
  "LED-EVN|2026-12-14": {
   "airline": "DP",
-  "price": 13307,
+  "price": 14010,
   "transfers": 1,
   "ts": "2026-12-14T07:05:00+03:00"
  },
  "LED-EVN|2026-12-15": {
   "airline": "DP",
-  "price": 15211,
+  "price": 15483,
   "transfers": 1,
   "ts": "2026-12-15T07:05:00+03:00"
  },
  "LED-EVN|2026-12-16": {
   "airline": "DP",
-  "price": 17118,
+  "price": 17055,
   "transfers": 1,
   "ts": "2026-12-16T07:05:00+03:00"
  },
  "LED-EVN|2026-12-17": {
-  "airline": "2S",
-  "price": 18560,
+  "airline": "DP",
+  "price": 18124,
   "transfers": 1,
-  "ts": "2026-12-17T14:40:00+03:00"
+  "ts": "2026-12-17T07:05:00+03:00"
  },
  "LED-EVN|2026-12-18": {
   "airline": "PC",
-  "price": 18445,
+  "price": 18544,
   "transfers": 1,
   "ts": "2026-12-18T15:35:00+03:00"
  },
  "MOW-EVN|2026-12-14": {
   "airline": "3F",
-  "price": 3236,
+  "price": 9662,
   "transfers": 0,
   "ts": "2026-12-14T21:00:00+03:00"
  },
  "MOW-EVN|2026-12-15": {
   "airline": "3F",
-  "price": 3236,
+  "price": 11514,
   "transfers": 0,
-  "ts": "2026-12-15T21:00:00+03:00"
+  "ts": "2026-12-15T02:50:00+03:00"
  },
  "MOW-EVN|2026-12-16": {
   "airline": "2S",
-  "price": 13866,
+  "price": 13815,
   "transfers": 1,
   "ts": "2026-12-16T00:50:00+03:00"
  },
  "MOW-EVN|2026-12-17": {
-  "airline": "3F",
-  "price": 3236,
-  "transfers": 0,
-  "ts": "2026-12-17T21:00:00+03:00"
+  "airline": "2S",
+  "price": 16059,
+  "transfers": 1,
+  "ts": "2026-12-17T00:50:00+03:00"
  },
  "MOW-EVN|2026-12-18": {
   "airline": "Y7",
-  "price": 17060,
+  "price": 15519,
   "transfers": 1,
   "ts": "2026-12-18T12:15:00+03:00"
  }
