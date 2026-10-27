@@ -1,10 +1,10 @@
 {
  "keys": {
   "DME-EVN|2026-12-15": {
-   "alerted": 12734,
-   "last": 11507,
-   "lvl": 1,
-   "min": 12559
+   "alerted": 5722,
+   "last": 3222,
+   "lvl": 2,
+   "min": 5722
   },
   "DME-EVN|2026-12-16": {
    "alerted": 14642,
@@ -14,7 +14,7 @@
   },
   "DME-EVN|2026-12-17": {
    "alerted": null,
-   "last": 23474,
+   "last": 25315,
    "min": 17556
   },
   "DME-EVN|2026-12-18": {
@@ -24,22 +24,22 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 30935,
+   "last": 30839,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 25395,
+   "last": 25316,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 19392,
+   "last": 19332,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 17545,
+   "last": 17491,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 23548,
+   "last": 23475,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 25395,
+   "last": 25316,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 17545,
+   "last": 17491,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 14313,
+   "last": 14269,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,8 +74,8 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 25125,
-   "min": 28624
+   "last": 25109,
+   "min": 28609
   },
   "TBS-LED|2026-12-16": {
    "alerted": null,
@@ -89,19 +89,19 @@
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 24206,
-   "min": 27705
+   "last": 24176,
+   "min": 27676
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 41034,
+   "last": 40983,
    "min": 44435
   },
   "VKO-EVN|2026-12-15": {
-   "alerted": 12288,
+   "alerted": 5722,
    "last": 11507,
-   "lvl": 1,
-   "min": 12288
+   "lvl": 2,
+   "min": 5722
   },
   "VKO-EVN|2026-12-16": {
    "alerted": 14642,
@@ -115,16 +115,17 @@
    "min": 17556
   },
   "VKO-EVN|2026-12-18": {
-   "alerted": null,
+   "alerted": 5722,
    "last": 25315,
-   "min": 21441
+   "lvl": 2,
+   "min": 5722
   }
  },
  "meta": {
-  "combo_alerted": 28409,
+  "combo_alerted": 22518,
   "combo_lvl": 1,
-  "combo_min": 28358,
-  "digest_date": "2026-10-26",
+  "combo_min": 22491,
+  "digest_date": "2026-10-27",
   "empty_streak": 0,
   "fail_streak": 0,
   "started": true
