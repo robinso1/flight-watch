@@ -2,44 +2,44 @@
  "keys": {
   "DME-EVN|2026-12-15": {
    "alerted": 5722,
-   "last": 11427,
+   "last": 11443,
    "lvl": 2,
    "min": 5722
   },
   "DME-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 15998,
+   "last": 16020,
    "lvl": 1,
    "min": 14642
   },
   "DME-EVN|2026-12-17": {
    "alerted": null,
-   "last": 23312,
+   "last": 23344,
    "min": 17556
   },
   "DME-EVN|2026-12-18": {
    "alerted": null,
-   "last": 23312,
+   "last": 21513,
    "min": 21441
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 32777,
+   "last": 32886,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 27237,
+   "last": 29181,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 17543,
+   "last": 17601,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 16158,
+   "last": 17601,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 25391,
+   "last": 25475,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 23544,
+   "last": 23623,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 17543,
+   "last": 17601,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 14311,
+   "last": 13433,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,7 +74,7 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 25047,
+   "last": 25046,
    "min": 28494
   },
   "TBS-LED|2026-12-16": {
@@ -89,34 +89,34 @@
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 24159,
+   "last": 24161,
    "min": 27632
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 40945,
+   "last": 40947,
    "min": 44409
   },
   "VKO-EVN|2026-12-15": {
    "alerted": 5722,
-   "last": 11427,
+   "last": 11443,
    "lvl": 2,
    "min": 5722
   },
   "VKO-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 15998,
+   "last": 15105,
    "lvl": 1,
    "min": 14642
   },
   "VKO-EVN|2026-12-17": {
    "alerted": null,
-   "last": 25140,
+   "last": 25175,
    "min": 17556
   },
   "VKO-EVN|2026-12-18": {
    "alerted": 5722,
-   "last": 23312,
+   "last": 21513,
    "lvl": 2,
    "min": 5722
   }
