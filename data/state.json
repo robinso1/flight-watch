@@ -2,13 +2,13 @@
  "keys": {
   "DME-EVN|2026-12-15": {
    "alerted": 5722,
-   "last": 10695,
+   "last": 11625,
    "lvl": 2,
    "min": 5722
   },
   "DME-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 17670,
+   "last": 19530,
    "lvl": 1,
    "min": 14642
   },
@@ -24,22 +24,22 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 36827,
+   "last": 37185,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 27504,
+   "last": 27771,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 19579,
+   "last": 19769,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 15384,
+   "last": 15533,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 27504,
+   "last": 27771,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 25639,
+   "last": 25889,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 17714,
+   "last": 17887,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 13519,
+   "last": 14592,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,7 +74,7 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 25178,
+   "last": 25255,
    "min": 28254
   },
   "TBS-LED|2026-12-16": {
@@ -89,12 +89,12 @@
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 24286,
+   "last": 24361,
    "min": 27377
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 41159,
+   "last": 41286,
    "min": 43966
   },
   "VKO-EVN|2026-12-15": {
@@ -111,7 +111,7 @@
   },
   "VKO-EVN|2026-12-17": {
    "alerted": null,
-   "last": 21855,
+   "last": 23715,
    "min": 17556
   },
   "VKO-EVN|2026-12-18": {
@@ -125,7 +125,7 @@
   "combo_alerted": 22518,
   "combo_lvl": 1,
   "combo_min": 22491,
-  "digest_date": "2026-11-03",
+  "digest_date": "2026-11-04",
   "empty_streak": 0,
   "fail_streak": 0,
   "started": true
