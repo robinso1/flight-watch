@@ -54,3 +54,11 @@ jobs:
           curl -s -m 20 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TG_CHAT}" \
             --data-urlencode "text=⚠️ Сбой бота (проверка цен). Подробности: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" > /dev/null || true
+
+      - name: Запустить следующий цикл
+        # запуск через GITHUB_TOKEN по repository_dispatch разрешен GitHub, поэтому цепочка идет без внешнего cron;
+        # расписание выше остается запасным и перезапустит цепочку, если она оборвется
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/${{ github.repository }}/dispatches -f event_type=tick
