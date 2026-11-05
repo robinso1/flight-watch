@@ -2,13 +2,13 @@
  "keys": {
   "DME-EVN|2026-12-15": {
    "alerted": 5722,
-   "last": 11736,
+   "last": 11670,
    "lvl": 2,
    "min": 5722
   },
   "DME-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 17839,
+   "last": 17738,
    "lvl": 1,
    "min": 14642
   },
@@ -24,22 +24,22 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 44021,
+   "last": 43836,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 27630,
+   "last": 27597,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 23416,
+   "last": 23317,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 15455,
+   "last": 15389,
    "min": 15594
   },
   "EVN-LED|2026-12-17": {
@@ -49,22 +49,22 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 29504,
+   "last": 29380,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 25757,
+   "last": 27514,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 16391,
+   "last": 17721,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 14518,
+   "last": 14457,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -74,7 +74,7 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 25107,
+   "last": 25076,
    "min": 28254
   },
   "TBS-LED|2026-12-16": {
@@ -89,34 +89,34 @@
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 24217,
+   "last": 24188,
    "min": 27377
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 41043,
+   "last": 40993,
    "min": 43966
   },
   "VKO-EVN|2026-12-15": {
    "alerted": 5722,
-   "last": 11736,
+   "last": 11670,
    "lvl": 2,
    "min": 5722
   },
   "VKO-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 15492,
+   "last": 15404,
    "lvl": 1,
    "min": 14642
   },
   "VKO-EVN|2026-12-17": {
    "alerted": null,
-   "last": 22064,
+   "last": 21939,
    "min": 17556
   },
   "VKO-EVN|2026-12-18": {
    "alerted": 5722,
-   "last": 20186,
+   "last": 21939,
    "lvl": 2,
    "min": 5722
   }
