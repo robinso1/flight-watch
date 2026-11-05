@@ -252,12 +252,12 @@
         "fire": 2000
       },
       "LED-EVN": {
-        "send": 15000,
-        "fire": 10000
+        "send": 14000,
+        "fire": 12000
       },
       "MOW-EVN": {
-        "send": 12500,
-        "fire": 7500
+        "send": 11500,
+        "fire": 9500
       }
     },
     "visa_free": [
@@ -350,7 +350,24 @@
         "2026-12-15",
         "2026-12-18"
       ]
-    }
+    },
+    "ru_allow": [
+      "MOW",
+      "KGD",
+      "AER",
+      "MCX",
+      "MRV",
+      "NAL",
+      "GDZ",
+      "KRR",
+      "MMK",
+      "IKT",
+      "UUD",
+      "VVO",
+      "PKC",
+      "YKS",
+      "ARH"
+    ]
   },
   "pax": 2
 }

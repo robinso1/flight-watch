@@ -122,6 +122,14 @@ def visa_status(dest, cities, c):
     return "free" if info.get("c") in c["visa_free"] else "visa"
 
 
+def boring(c, dest, cities):
+    """Ничем не примечательный город РФ: не из белого списка и не из low_interest (у тех свой порог цены)."""
+    allow = c.get("ru_allow")
+    if allow is None or (cities.get(dest) or {}).get("c") != "RU":
+        return False
+    return dest not in allow and dest not in c.get("low_interest", {}).get("dests", [])
+
+
 def in_window(c, dest, d):
     w = c.get("dest_windows", {}).get(dest)
     return not w or (w[0] <= d <= w[1])
@@ -159,6 +167,8 @@ def run(c, token, data_dir, offers, notify):
         norm, src = norm_for(gk, prices, hist, today, c)
         best = min(lst, key=lambda o: o["value"])
         vs = visa_status(dest, cities, c)
+        if boring(c, dest, cities):
+            continue
         li = c.get("low_interest", {})
         if dest in li.get("dests", []) and best["value"] > li.get("overrides", {}).get(dest, li["max_price"]):
             continue
@@ -259,7 +269,7 @@ def hot_scan(c, token, data_dir, notify):
     found = []
     for origin, o in cand:
         dest, price, date_ = o["destination"], o["price"], o["departure_at"][:10]
-        if not in_window(c, dest, date_):
+        if not in_window(c, dest, date_) or boring(c, dest, cities):
             continue
         li = c.get("low_interest", {})
         if dest in li.get("dests", []) and price > li.get("overrides", {}).get(dest, li["max_price"]):
