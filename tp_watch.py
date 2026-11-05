@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Мониторинг связок Питер/Москва - Ереван с пересадками (Travelpayouts, кэш Авиасейлса).
+"""Мониторинг связок Питер/Москва - Ереван, Кутаиси, Гюмри с пересадками (Travelpayouts, кэш Авиасейлса).
 
 Запуск: python tp_watch.py            обычный проход
         python tp_watch.py --selftest офлайн-проверка на выдуманных ценах
@@ -40,14 +40,15 @@ def day_range(a, b):
 
 
 def legs(cfg):
-    """[(ключ, откуда, куда, [даты])] для всех городов из tp_watch.cities."""
+    """[(ключ, откуда, куда, [даты], настройки маршрута)]: туда и обратно для каждого маршрута tp_watch.routes."""
     t = cfg["tp_watch"]
     w = cfg["anomaly"]["dest_windows"][EVN]
     outs, backs = day_range(*w), t["back_dates"]
     res = []
-    for city in t["cities"]:
-        res.append((f"{city}-{EVN}", city, EVN, outs))
-        res.append((f"{EVN}-{city}", EVN, city, backs))
+    for r in t["routes"]:
+        a, b = r["from"], r["to"]
+        res.append((f"{a}-{b}", a, b, outs, r))
+        res.append((f"{b}-{a}", b, a, backs, r))
     return res
 
 
@@ -92,11 +93,9 @@ def process(cfg, data, state, today):
     t = cfg["tp_watch"]
     yesterday = (date.fromisoformat(today) - timedelta(days=1)).isoformat()
     alerts, minor = [], []
-    for key, o, d, dates in legs(cfg):
+    for key, o, d, dates, cc in legs(cfg):
         if key not in data:
             continue
-        city = o if d == EVN else d
-        cc = t["cities"][city]
         for day, x in sorted(best_by_day(data[key], dates, t["max_transfers"]).items()):
             p = x["price"]
             k = state["keys"].setdefault(f"{key}|{day}", {"min": None, "last": None, "days": {}})
@@ -134,7 +133,7 @@ def process(cfg, data, state, today):
                 old = ref if extra_lines else prev_min
                 pct = round((p / old - 1) * 100)
                 st = "прямой" if not x.get("transfers") else f"{x['transfers']} перес."
-                minor.append((kind, f"{'⏰' if kind == 'rise' else '📉'} {msg.city_of(o)} → {msg.city_of(d)}, {msg.date_short(day)}: "
+                minor.append((kind, f"{'⏰' if kind == 'rise' else '📉'} {msg.city_of(o) or o} → {msg.city_of(d) or d}, {msg.date_short(day)}: "
                                     f"<b>{msg.money(p)}</b> (было {msg.money(old)}, {pct:+d}%), {msg.esc(carrier or '')}, {st}, "
                                     f"вылет {(x.get('departure_at') or '')[11:16]} · {msg.a(link, 'билет')}"))
                 continue
@@ -158,7 +157,7 @@ def process(cfg, data, state, today):
         rises = any(k == "rise" for k, _ in minor)
         head = "📊 <b>ИЗМЕНЕНИЯ ЦЕН: ЕРЕВАН</b>" if rises else "📉 <b>ЦЕНА УПАЛА: ЕРЕВАН</b>"
         texts.append(head + "\n\n" + "\n\n".join(line for _, line in minor) +
-                     "\n\n<i>С пересадками, цена билета на одного. Данные из кэша: проверьте цену перед покупкой</i>")
+                     "\n\n<i>До одной пересадки, цена билета на одного. Данные из кэша: проверьте цену перед покупкой</i>")
     return texts
 
 
@@ -168,7 +167,7 @@ def run(cfg, token, data_dir, fetcher=fetch, notify=watch.tg_send):
     today = watch.now().strftime("%Y-%m-%d")
     data, errors = {}, []
     lg = legs(cfg)
-    for key, o, d, dates in lg:
+    for key, o, d, dates, _ in lg:
         try:
             data[key] = fetcher(token, o, d, sorted({x[:7] for x in dates}))
         except Exception as e:
@@ -179,7 +178,7 @@ def run(cfg, token, data_dir, fetcher=fetch, notify=watch.tg_send):
     for text in texts:
         notify(text, html=True)
     watch.save_json(path, state)
-    for key, _, _, dates in lg:
+    for key, _, _, dates, _ in lg:
         for day in dates:
             k = state["keys"].get(f"{key}|{day}")
             if k and k.get("last"):
@@ -193,7 +192,7 @@ def selftest():
     watch.DRY = True
     d = Path(tempfile.mkdtemp())
     cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
-    prices = {"LED-EVN": 16000, "EVN-LED": 18000, "MOW-EVN": 12000, "EVN-MOW": 14000}
+    prices = {"LED-EVN": 16000, "EVN-LED": 18000, "MOW-EVN": 12000, "EVN-MOW": 14000, "LED-KUT": 9000, "KUT-LED": 9000, "LED-LWN": 13000, "LWN-LED": 13000}
     k = {"v": 1.0}
 
     def fake(token, o, dest, months):

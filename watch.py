@@ -252,6 +252,27 @@ def line(day, o):
     return f"{day[8:]}.{day[5:7]} {money(o['price'])}, {o['airlines']}, вылет {o['dep'][-5:]}, {st}"
 
 
+MOSCOW = {"SVO", "DME", "VKO", "ZIA", "MOW"}
+
+
+def city(code):
+    return "MOW" if code in MOSCOW else code
+
+
+def cleanup(cfg, keys):
+    """Разовая чистка state: ключи вне config и минимумы от выбросов, по которым уже ушел алерт (вдвое ниже последней цены)."""
+    valid = {f"{r['name']}|{d}": r.get("extra", 0) for r in cfg["routes"] for d in r["dates"]}
+    for key in list(keys):
+        if key not in valid:
+            del keys[key]
+            continue
+        k = keys[key]
+        eff_last = (k.get("last") or 0) + valid[key]
+        if k.get("last") and k.get("min") and k.get("alerted") == k["min"] and k["min"] < eff_last * 0.5:
+            print(f"Сброс выброса {key}: min {k['min']} при последней {eff_last}")
+            k["min"], k["alerted"], k["lvl"] = eff_last, None, 0
+
+
 def run(cfg):
     DATA.mkdir(exist_ok=True)
     state = load_json(DATA / "state.json", {"keys": {}, "meta": {}})
@@ -261,6 +282,10 @@ def run(cfg):
     stamp = now().strftime("%Y-%m-%d %H:%M")
 
     cheapest, errors, empties, total_req, airlines_seen = {}, [], 0, 0, set()
+    sent = set()  # рейсы, по которым уже ушел алерт в этом проходе (SVO, DME и VKO часто дают одни и те же)
+    if not meta.get("cleanup_1"):
+        cleanup(cfg, keys)
+        meta["cleanup_1"] = True
     unpriced_seen = {}
     for r in cfg["routes"]:
         for day in r["dates"]:
@@ -292,8 +317,16 @@ def run(cfg):
                 empties += 1
                 continue
             best = min(offers, key=lambda o: o["price"])
-            cheapest[key] = best
             k = keys.setdefault(key, {"min": None, "last": None, "alerted": None})
+            # выброс: цена вдвое ниже прошлой проверки принимается, только если повторится в следующий раз
+            if k["last"] and best["price"] < k["last"] * 0.5:
+                pend = k.get("pending")
+                if not (pend and abs(best["price"] - pend) <= pend * 0.1):
+                    k["pending"] = best["price"]
+                    print(f"Подозрительная цена {key}: {best['price']} при прошлой {k['last']}, ждем подтверждения")
+                    continue
+            k.pop("pending", None)
+            cheapest[key] = best
             alerts, hot_alerts = [], []
             extra = r.get("extra", 0)
             eff = best["price"] + extra  # цена с дорогой и едой, на одного
@@ -311,7 +344,11 @@ def run(cfg):
             if k["last"] != best["price"]:
                 append_csv([stamp, r["name"], day, best["price"], best["airlines"], best["dep"], best["stops"]])
                 k["last"] = best["price"]
-            if hot_alerts or (alerts and not first_run):
+            sig = (city(r["origin"]), city(r["dest"]), day, best["price"], best["dep"][-5:])
+            if (hot_alerts or (alerts and not first_run)) and sig in sent:
+                print(f"Дубль {key}: тот же рейс уже отправлен по другому аэропорту")
+            elif hot_alerts or (alerts and not first_run):
+                sent.add(sig)
                 kind = ("great" if hot_alerts[0] == 2 else "low") if hot_alerts else "drop"
                 tg_send(
                     msg.deal(kind, r["origin"], r["dest"], day, best["price"], prev=prev_min if alerts else None,

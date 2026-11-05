@@ -33,6 +33,7 @@ DEFAULTS = {
     "hot_min_points": 8,     # сколько дней в календаре нужно, чтобы медиана считалась надежной
     "hot_max_price": 40000,
     "niche": {"dests": [], "ratio": 0.2, "discount": 0.8},  # малопопулярные направления: только очень глубокая скидка
+    "strict_dests": {},      # {"MOW": {"ratio": 0.2, "discount": 0.8}}: в эти города только очень сильные аномалии
     "strict_origins": {},    # {"MOW": {"ratio": 0.25, "discount": 0.85}}: из этих городов только очень сильные аномалии
     "low_interest": {"dests": [], "max_price": 1500},  # неинтересные внутренние города: только если совсем дёшево
     "dest_windows": {},      # {"EVN": ["2026-12-15", "2026-12-18"]}: вылеты в это направление вне окна не показываем
@@ -184,6 +185,9 @@ def run(c, token, data_dir, offers, notify):
         nc = c.get("niche", {})
         if dest in nc.get("dests", []) and gk not in priority:
             limit = min(limit, nc["ratio"])
+        sd = c.get("strict_dests", {}).get(dest)
+        if sd:
+            limit = min(limit, sd["ratio"])
         cap = c["max_price_rub"] if gk not in priority else max(c["max_price_rub"], 1)
         ab = c.get("abs_rub", {}).get(gk)
         if ab:
@@ -294,6 +298,8 @@ def hot_scan(c, token, data_dir, notify):
         nc = c.get("niche", {})
         if dest in nc.get("dests", []):
             need = max(need, nc["discount"])
+        if dest in c.get("strict_dests", {}):
+            need = max(need, c["strict_dests"][dest]["discount"])
         key = f"{origin}-{dest}|{date_}"
         prev = alerted.get(key)
         if disc >= need and price <= c["hot_max_price"] and (prev is None or price < prev * (1 - c["realert_drop"])):
