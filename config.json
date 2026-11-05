@@ -369,5 +369,31 @@
       "ARH"
     ]
   },
-  "pax": 2
+  "pax": 2,
+  "tp_watch": {
+    "back_dates": [
+      "2026-12-20",
+      "2026-12-21",
+      "2026-12-22",
+      "2026-12-23"
+    ],
+    "max_transfers": 1,
+    "new_min_drop": 0.05,
+    "day_drop": 0.15,
+    "day_rise": 0.2,
+    "max_alerts": 6,
+    "cities": {
+      "LED": {
+        "hot": 14000,
+        "fire": 12000,
+        "extra": 0
+      },
+      "MOW": {
+        "hot": 11500,
+        "fire": 9500,
+        "extra": 2500,
+        "extra_label": "🚆 Поезд СПб - Москва и еда"
+      }
+    }
+  }
 }
