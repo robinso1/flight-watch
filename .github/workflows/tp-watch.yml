@@ -30,7 +30,7 @@ jobs:
       - run: |
           git config user.name "flight-watch"
           git config user.email "flight-watch@users.noreply.github.com"
-          git add data/tp_state.json
+          git add data/tp_state.json data/sent_tp.json 2>/dev/null || git add data/tp_state.json
           git diff --cached --quiet && exit 0
           git commit -m "tp state"
           for i in 1 2 3 4 5; do git pull --rebase -X theirs && git push && exit 0; sleep 5; done

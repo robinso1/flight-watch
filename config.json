@@ -154,10 +154,10 @@
       "EVN-DME",
       "EVN-VKO"
     ],
-    "hot_rub": 28000,
-    "fire_rub": 24000
+    "hot_rub": 23000,
+    "fire_rub": 20000
   },
-  "hot_rub": 15000,
+  "hot_rub": 12000,
   "fire_rub": 10000,
   "anomaly": {
     "origins": [
@@ -200,12 +200,12 @@
         "fire": 2000
       },
       "LED-EVN": {
-        "send": 14000,
-        "fire": 12000
+        "send": 12000,
+        "fire": 10000
       },
       "MOW-EVN": {
-        "send": 11500,
-        "fire": 9500
+        "send": 9500,
+        "fire": 8000
       }
     },
     "visa_free": [
@@ -357,35 +357,35 @@
       {
         "from": "LED",
         "to": "EVN",
-        "hot": 14000,
-        "fire": 12000
+        "hot": 12000,
+        "fire": 10000
       },
       {
         "from": "MOW",
         "to": "EVN",
-        "hot": 11500,
-        "fire": 9500,
+        "hot": 9500,
+        "fire": 8000,
         "extra": 2500,
         "extra_label": "🚆 Поезд СПб - Москва и еда"
       },
       {
         "from": "LED",
         "to": "KUT",
-        "hot": 9000,
-        "fire": 7000,
+        "hot": 7000,
+        "fire": 5000,
         "extra": 5000,
         "extra_label": "🚌 Маршрутка Кутаиси - Тбилиси - Ереван и еда (оценка)"
       },
       {
         "from": "LED",
         "to": "LWN",
-        "hot": 12500,
-        "fire": 10500,
+        "hot": 10500,
+        "fire": 8500,
         "extra": 1500,
         "extra_label": "🚌 Маршрутка Гюмри - Ереван и еда (оценка)"
       }
     ],
-    "pair_hot": 28000,
-    "pair_fire": 24000
+    "pair_hot": 23000,
+    "pair_fire": 20000
   }
 }

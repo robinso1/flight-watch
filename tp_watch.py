@@ -86,7 +86,7 @@ def migrate(state):
     return {"v": 2, "keys": keys, "meta": {}}
 
 
-def process(cfg, data, state, today):
+def process(cfg, data, state, today, data_dir=None):
     """data: {ключ_маршрута: [строки API]}. Меняет state, возвращает тексты алертов.
     Шлем только реально выгодное: билет в бюджете и пару туда-обратно в бюджете. Просто падения цены не шлем."""
     t = cfg["tp_watch"]
@@ -119,6 +119,8 @@ def process(cfg, data, state, today):
             days[today] = min(days.get(today, p), p)
             for old in [x for x in days if x < yesterday]:
                 del days[old]
+            if kind and data_dir and not watch.fresh_deal(data_dir, "tp", watch.deal_key(o, d, day), p):
+                kind = None
             if not kind:
                 continue
             lines = []
@@ -142,7 +144,8 @@ def process(cfg, data, state, today):
         total, o_, b_ = pairs[0]
         meta = state.setdefault("meta", {})
         prev = meta.get("pair_alerted")
-        if total <= t["pair_hot"] and (prev is None or total < prev * (1 - t["new_min_drop"])):
+        if total <= t["pair_hot"] and (prev is None or total < prev * (1 - t["new_min_drop"])) and \
+                (not data_dir or watch.fresh_deal(data_dir, "tp", "PAIR|" + watch.deal_key(o_["origin"], b_["dest"], o_["date"], b_["date"]), total)):
             meta["pair_alerted"] = total
             kind = "fire" if total <= t["pair_fire"] else "low"
             note = (f"💳 Итого {msg.money(total)} на человека, {on_two(total)}, с дорогой и едой\n"
@@ -150,8 +153,6 @@ def process(cfg, data, state, today):
             texts.insert(0, msg.roundtrip(kind, o_, b_, total,
                                           links_out=[("Авиасейлс", o_["link"])], links_back=[("Авиасейлс", b_["link"])],
                                           prev=prev, note=note))
-        elif total > t["pair_hot"] * 1.1:
-            meta.pop("pair_alerted", None)  # пара ушла из бюджета: при возврате пришлем снова
     return texts
 
 
@@ -168,7 +169,7 @@ def run(cfg, token, data_dir, fetcher=fetch, notify=watch.tg_send):
             errors.append(f"{key}: {type(e).__name__} {str(e)[:120]}")
     for e in errors:
         print("Ошибка API:", e)
-    texts = process(cfg, data, state, today)
+    texts = process(cfg, data, state, today, data_dir)
     for text in texts:
         notify(text, html=True)
     watch.save_json(path, state)

@@ -259,6 +259,30 @@ def city(code):
     return "MOW" if code in MOSCOW else code
 
 
+SENT_FILES = ("sent_watch.json", "sent_tp.json", "sent_anomaly.json")
+
+
+def fresh_deal(data_dir, name, key, price, drop=0.03):
+    """Общий антидубль трех ботов: тот же маршрут и дату шлем повторно, только если цена ниже уже отправленной на drop.
+    Каждый бот пишет свой файл (без конфликтов при push), а читает все три. key: "LED-EVN|2026-12-15"."""
+    prev = [load_json(data_dir / f, {}).get(key) for f in SENT_FILES]
+    prev = [p for p in prev if p]
+    if prev and price >= min(prev) * (1 - drop):
+        print(f"Уже отправляли {key} по {min(prev)}, сейчас {price}: не шлем")
+        return False
+    path = data_dir / f"sent_{name}.json"
+    own = load_json(path, {})
+    today = now().strftime("%Y-%m-%d")
+    own = {k: v for k, v in own.items() if k.split("|")[-1] >= today}
+    own[key] = price
+    save_json(path, own)
+    return True
+
+
+def deal_key(origin, dest, *days):
+    return f"{city(origin)}-{city(dest)}|" + "|".join(days)
+
+
 def cleanup(cfg, keys):
     """Разовая чистка state: ключи вне config и минимумы от выбросов, по которым уже ушел алерт (вдвое ниже последней цены)."""
     valid = {f"{r['name']}|{d}": r.get("extra", 0) for r in cfg["routes"] for d in r["dates"]}
@@ -348,6 +372,8 @@ def run(cfg):
             # шлем только билеты в бюджете; просто падение цены не повод для сообщения
             if hot_alerts and sig in sent:
                 print(f"Дубль {key}: тот же рейс уже отправлен по другому аэропорту")
+            elif hot_alerts and not fresh_deal(DATA, "watch", deal_key(r["origin"], r["dest"], day), best["price"]):
+                pass
             elif hot_alerts:
                 sent.add(sig)
                 kind = "great" if hot_alerts[0] == 2 else "low"
@@ -390,6 +416,9 @@ def run(cfg):
             meta["combo_lvl"] = clvl
         prev_combo = cm
         meta["combo_min"] = combo["total"] if cm is None else min(cm, combo["total"])
+        if hot_c and not fresh_deal(DATA, "watch", "PAIR|" + deal_key(combo["out_route"].split("-")[0], combo["back_route"].split("-")[1],
+                                                                   combo["out_day"], combo["back_day"]), combo["total"]):
+            hot_c = None
         if hot_c:
             r_out = next(r for r in cfg["routes"] if r["name"] == combo["out_route"])
             r_back = next(r for r in cfg["routes"] if r["name"] == combo["back_route"])

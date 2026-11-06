@@ -253,9 +253,11 @@ def run(c, token, data_dir, offers, notify, fetch=None):
             priority=gk in priority,
             cache_note=True,
         )
+        alerted[key] = o["value"]
+        if not watch.fresh_deal(data_dir, "anomaly", watch.deal_key(origin, dest, d), o["value"]):
+            continue
         if notify:
             notify(text, html=True)
-        alerted[key] = o["value"]
         sent += 1
 
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
@@ -406,9 +408,11 @@ def hot_scan(c, token, data_dir, notify):
             ],
             found_at=best.get("found_at"), cities=cities, cache_note=True,
         )
+        alerted[key] = price
+        if not watch.fresh_deal(data_dir, "anomaly", watch.deal_key(origin, dest, date_), price):
+            continue
         if notify:
             notify(text, html=True)
-        alerted[key] = price
         sent += 1
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
     print(f"Горячие билеты: предложений {len(cand)}, проверено календарей {checked}, подходит {len(found)}, отправлено {sent}")
