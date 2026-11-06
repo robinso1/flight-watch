@@ -136,7 +136,7 @@ def in_window(c, dest, d):
     return not w or (w[0] <= d <= w[1])
 
 
-def run(c, token, data_dir, offers, notify):
+def run(c, token, data_dir, offers, notify, fetch=None):
     today = watch.now().strftime("%Y-%m-%d")
     state_path = data_dir / "anomaly_state.json"
     try:
@@ -161,14 +161,18 @@ def run(c, token, data_dir, offers, notify):
     for o in good:
         groups.setdefault(f"{o['_origin']}-{o['destination']}", []).append(o)
 
-    found = []
+    found, rt_cands = [], []
     for gk, lst in groups.items():
         origin, dest = gk.split("-")
         prices = [o["value"] for o in lst]
         norm, src = norm_for(gk, prices, hist, today, c)
         best = min(lst, key=lambda o: o["value"])
         vs = visa_status(dest, cities, c)
+        rt = c.get("round_trip", {})
         if boring(c, dest, cities):
+            # неинтересный город: только как пара туда-обратно с совсем аномальной ценой
+            if origin == rt.get("origin") and norm and best["value"] <= norm * rt["boring_leg"]:
+                rt_cands.append((gk, best, norm, vs, True))
             continue
         li = c.get("low_interest", {})
         if dest in li.get("dests", []) and best["value"] > li.get("overrides", {}).get(dest, li["max_price"]):
@@ -200,6 +204,9 @@ def run(c, token, data_dir, offers, notify):
             prev = alerted.get(key)
             if prev is None or best["value"] < prev * (1 - c["realert_drop"]):
                 found.append((best["value"] / (norm or best["value"]), gk, best, norm, src, key, vs))
+        if norm and origin == c.get("round_trip", {}).get("origin") and dest not in c.get("round_trip", {}).get("skip", []) \
+                and best["value"] <= norm * c["round_trip"]["leg"]:
+            rt_cands.append((gk, best, norm, vs, False))
 
     for gk, lst in groups.items():
         m = min(o["value"] for o in lst)
@@ -211,12 +218,23 @@ def run(c, token, data_dir, offers, notify):
         if not hist[gk]:
             del hist[gk]
     for k in list(alerted):
-        if k.split("|")[1] < today:
+        if k.split("|")[-1] < today:
             del alerted[k]
+
+    # пары туда-обратно: по направлению с пары не шлем отдельный билет в одну сторону
+    pairs = round_trips(c, token, rt_cands, alerted, fetch or fetch_latest)
+    paired = {p["gk"] for p in pairs}
+    found = [f for f in found if f[1] not in paired]
+    if pairs:
+        if notify:
+            notify(rt_text(c, pairs, cities), html=True)
+        for p in pairs:
+            alerted[p["key"]] = p["total"]
+            alerted[f"{p['gk']}|{p['out']['depart_date']}"] = p["out"]["value"]
 
     # приоритетные маршруты идут первыми, дальше по глубине скидки
     found.sort(key=lambda x: (x[1] not in priority, x[0]))
-    sent = 0
+    sent = len(pairs)
     for ratio, gk, o, norm, src, key, vs in found[: c["max_alerts"]]:
         origin, dest = gk.split("-")
         d = o["depart_date"]
@@ -243,6 +261,74 @@ def run(c, token, data_dir, offers, notify):
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
     print(f"Предложений: {len(offers)}, после фильтра: {len(good)}, направлений: {len(groups)}, аномалий: {len(found)}, отправлено: {sent}")
     return found
+
+
+def round_trips(c, token, cands, alerted, fetch):
+    """Для направлений с дешевым билетом туда ищем дешевый обратный и считаем скидку пары к норме."""
+    if not cands:
+        return []
+    rt = c["round_trip"]
+    out = []
+    cands = sorted(cands, key=lambda x: x[1]["value"] / x[2])[: rt["max_checks"]]
+    for gk, best, norm, vs, is_boring in cands:
+        origin, dest = gk.split("-")
+        try:
+            rows = fetch(token, c, dest, origin)
+        except Exception as e:
+            print("Ошибка обратных цен", dest, type(e).__name__, str(e)[:80])
+            continue
+        daymin = {}
+        for x in rows:
+            if x.get("actual", True) and x.get("value") and (x.get("number_of_changes") or 0) <= c["max_changes"]:
+                d = x["depart_date"]
+                if d not in daymin or x["value"] < daymin[d]["value"]:
+                    daymin[d] = x
+        if len(daymin) < c["min_snapshot"]:
+            continue
+        norm_back = statistics.median(x["value"] for x in daymin.values())
+        d0 = date.fromisoformat(best["depart_date"])
+        lo, hi = (d0 + timedelta(days=rt["min_days"])).isoformat(), (d0 + timedelta(days=rt["max_days"])).isoformat()
+        backs = [x for d, x in daymin.items() if lo <= d <= hi]
+        if not backs:
+            continue
+        back = min(backs, key=lambda x: x["value"])
+        leg_lim, total_lim = (rt["boring_leg"], rt["boring_total"]) if is_boring else (rt["leg"], rt["total"])
+        total, norm_total = best["value"] + back["value"], norm + norm_back
+        if back["value"] > norm_back * leg_lim or total > norm_total * total_lim or total > rt["max_total"]:
+            continue
+        key = f"RT|{gk}|{best['depart_date']}|{back['depart_date']}"
+        prev = alerted.get(key)
+        if prev is not None and total >= prev * (1 - c["realert_drop"]):
+            continue
+        out.append({"gk": gk, "key": key, "out": best, "back": back, "total": total, "norm": norm_total,
+                    "vs": vs, "boring": is_boring})
+    out.sort(key=lambda p: p["total"] / p["norm"])
+    return out[: rt["max_alerts"]]
+
+
+def rt_text(c, pairs, cities):
+    """Сводка выгодных пар туда-обратно одним сообщением."""
+    pax = c.get("pax", 2)
+    blocks = ["🚨🔥🚨 <b>ВЫГОДНО ТУДА-ОБРАТНО</b> 🚨🔥🚨"]
+    for p in pairs:
+        origin, dest = p["gk"].split("-")
+        o, b = p["out"], p["back"]
+        name = msg.city_of(dest, cities) or dest
+        pct = round((1 - p["total"] / p["norm"]) * 100)
+        st = lambda x: "прямой" if not x.get("number_of_changes") else f"{x['number_of_changes']} перес."
+        lo = f"https://www.aviasales.ru/search/{origin}{o['depart_date'][8:10]}{o['depart_date'][5:7]}{dest}1"
+        lb = f"https://www.aviasales.ru/search/{dest}{b['depart_date'][8:10]}{b['depart_date'][5:7]}{origin}1"
+        lines = [msg.route_line(origin, dest, cities, arrow="⇄") + f" <i>{msg.esc(name)}</i>",
+                 f"📅 {msg.date_short(o['depart_date'])} → {msg.date_short(b['depart_date'])}",
+                 f"💰 <b>{msg.money(p['total'])}</b> на человека, {msg.money(p['total'] * pax)} на двоих",
+                 f"Туда {msg.money(o['value'])} ({st(o)}), обратно {msg.money(b['value'])} ({st(b)})",
+                 f"Обычно ~{msg.money(p['norm'])} · скидка {pct}%"]
+        if p["vs"] == "visa":
+            lines.append("🛂 Виза: возможно, нужна")
+        lines.append(f"🔎 {msg.a(lo, 'туда')} · {msg.a(lb, 'обратно')}")
+        blocks.append("\n".join(lines))
+    blocks.append("<i>Данные из кэша: проверьте цены перед покупкой</i>")
+    return "\n\n".join(blocks)
 
 
 def median(xs):

@@ -345,11 +345,12 @@ def run(cfg):
                 append_csv([stamp, r["name"], day, best["price"], best["airlines"], best["dep"], best["stops"]])
                 k["last"] = best["price"]
             sig = (city(r["origin"]), city(r["dest"]), day, best["price"], best["dep"][-5:])
-            if (hot_alerts or (alerts and not first_run)) and sig in sent:
+            # шлем только билеты в бюджете; просто падение цены не повод для сообщения
+            if hot_alerts and sig in sent:
                 print(f"Дубль {key}: тот же рейс уже отправлен по другому аэропорту")
-            elif hot_alerts or (alerts and not first_run):
+            elif hot_alerts:
                 sent.add(sig)
-                kind = ("great" if hot_alerts[0] == 2 else "low") if hot_alerts else "drop"
+                kind = "great" if hot_alerts[0] == 2 else "low"
                 tg_send(
                     msg.deal(kind, r["origin"], r["dest"], day, best["price"], prev=prev_min if alerts else None,
                              stops=best["stops"], dep_time=best["dep"][-5:], carrier=best["airlines"],
@@ -389,10 +390,10 @@ def run(cfg):
             meta["combo_lvl"] = clvl
         prev_combo = cm
         meta["combo_min"] = combo["total"] if cm is None else min(cm, combo["total"])
-        if hot_c or (new_min and not first_run):
+        if hot_c:
             r_out = next(r for r in cfg["routes"] if r["name"] == combo["out_route"])
             r_back = next(r for r in cfg["routes"] if r["name"] == combo["back_route"])
-            kind = ("great" if hot_c == 2 else "low") if hot_c else "drop"
+            kind = "great" if hot_c == 2 else "low"
             note = None
             pax = cfg.get("pax", 1)
             note = (f"Дорога и еда в пути заложены: {money(combo['extra'])}\n" if combo["extra"] else "") + \
@@ -413,7 +414,7 @@ def run(cfg):
 
     # первое сообщение и суточная сводка
     today = now().strftime("%Y-%m-%d")
-    want_digest = first_run or (now().hour >= cfg.get("digest_hour_msk", 9) and meta.get("digest_date") != today)
+    want_digest = first_run  # ежедневную сводку не шлем: выгодные пары приходят отдельными алертами
     if want_digest and not (cheapest or unpriced_seen) and not first_run:
         # тишина не должна путаться со сбоем: раз в сутки сообщаем, что бот жив
         tg_send(msg.notice("📊", "Сводка", "Бот работает. Google Flights сейчас не показывает рейсов на выбранные даты, проверки идут по расписанию."), html=True)

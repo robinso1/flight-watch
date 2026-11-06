@@ -6,11 +6,9 @@
 Даты туда берутся из anomaly.dest_windows.EVN, обратно и пороги из секции tp_watch в config.json.
 Пороги hot/fire сравниваются с ценой билета на одного, без надбавки на дорогу.
 
-Алерты (один на билет за проход, по важности):
-  попадание в бюджет (hot/fire) или новое падение ниже уже отправленного на 3%;
-  новый минимум по дате на new_min_drop ниже прежнего;
-  падение больше day_drop относительно минимума прошлых суток;
-  рост больше day_rise относительно минимума прошлых суток, если вчера билет был около бюджета.
+Алерты только реально выгодные:
+  билет в бюджете (hot/fire), повторно только если подешевел еще на new_min_drop;
+  лучшая пара туда-обратно с дорогой и едой не дороже pair_hot на человека.
 """
 import json
 import os
@@ -89,10 +87,13 @@ def migrate(state):
 
 
 def process(cfg, data, state, today):
-    """data: {ключ_маршрута: [строки API]}. Меняет state, возвращает [(цена, текст)] алертов."""
+    """data: {ключ_маршрута: [строки API]}. Меняет state, возвращает тексты алертов.
+    Шлем только реально выгодное: билет в бюджете и пару туда-обратно в бюджете. Просто падения цены не шлем."""
     t = cfg["tp_watch"]
+    pax = cfg.get("pax", 1)
+    on_two = lambda v: f"{msg.money(v * pax)} " + ("на двоих" if pax == 2 else f"на {pax}")
     yesterday = (date.fromisoformat(today) - timedelta(days=1)).isoformat()
-    alerts, minor = [], []
+    alerts, outs, backs = [], [], []
     for key, o, d, dates, cc in legs(cfg):
         if key not in data:
             continue
@@ -100,64 +101,57 @@ def process(cfg, data, state, today):
             p = x["price"]
             k = state["keys"].setdefault(f"{key}|{day}", {"min": None, "last": None, "days": {}})
             days = k.setdefault("days", {})
-            ref = days.get(yesterday)
             prev_min = k["min"]
-            kind, extra_lines = None, []
+            link = ("https://www.aviasales.ru" + x["link"]) if x.get("link") else f"https://www.aviasales.ru/search/{o}{day[8:10]}{day[5:7]}{d}1"
+            carrier = CARRIERS.get(x.get("airline"), x.get("airline"))
+            eff = p + cc.get("extra", 0)
+            leg_info = {"origin": o, "dest": d, "date": day, "price": p, "eff": eff, "carrier": carrier,
+                        "dep_time": (x.get("departure_at") or "")[11:16], "stops": x.get("transfers"), "link": link}
+            (outs if o == cc["from"] else backs).append(leg_info)
 
+            kind = None
             lvl = 2 if p <= cc["fire"] else 1 if p <= cc["hot"] else 0
             if lvl and (lvl > k.get("lvl", 0) or not k.get("alerted") or p < k["alerted"] * (1 - t["new_min_drop"])):
                 kind = "fire" if lvl == 2 else "low"
                 k["alerted"], k["lvl"] = p, lvl
-            elif prev_min and p < prev_min * (1 - t["new_min_drop"]):
-                kind = "drop"
-            elif ref and p <= ref * (1 - t["day_drop"]):
-                kind = "drop"
-                extra_lines.append(f"За сутки: -{round((1 - p / ref) * 100)}% (вчера от {watch.money(ref)})")
-            elif ref and p >= ref * (1 + t["day_rise"]) and ref <= cc["hot"] * 1.15 and k.get("rise_day") != today:
-                kind = "rise"
-                k["rise_day"] = today
-                extra_lines.append(f"Вчера было от {watch.money(ref)}, сейчас +{round((p / ref - 1) * 100)}%")
-
             k["min"] = p if prev_min is None else min(prev_min, p)
             k["last"] = p
             days[today] = min(days.get(today, p), p)
             for old in [x for x in days if x < yesterday]:
                 del days[old]
-
             if not kind:
                 continue
-            link = ("https://www.aviasales.ru" + x["link"]) if x.get("link") else f"https://www.aviasales.ru/search/{o}{day[8:10]}{day[5:7]}{d}1"
-            carrier = CARRIERS.get(x.get("airline"), x.get("airline"))
-            if kind in ("drop", "rise"):
-                # мелкие изменения собираем в одно сообщение, чтобы не засыпать чат
-                old = ref if extra_lines else prev_min
-                pct = round((p / old - 1) * 100)
-                st = "прямой" if not x.get("transfers") else f"{x['transfers']} перес."
-                minor.append((kind, f"{'⏰' if kind == 'rise' else '📉'} {msg.city_of(o) or o} → {msg.city_of(d) or d}, {msg.date_short(day)}: "
-                                    f"<b>{msg.money(p)}</b> (было {msg.money(old)}, {pct:+d}%), {msg.esc(carrier or '')}, {st}, "
-                                    f"вылет {(x.get('departure_at') or '')[11:16]} · {msg.a(link, 'билет')}"))
-                continue
-            lines = list(extra_lines)
+            lines = []
             if hm(x.get("duration") or x.get("duration_to")):
                 lines.append(f"⏱ В пути: {hm(x.get('duration') or x.get('duration_to'))}")
             if cc.get("extra"):
                 lines.append(f"{cc.get('extra_label', 'Дорога и еда')}: +{msg.money(cc['extra'])}")
-            eff = p + cc.get("extra", 0)
-            pax = cfg.get("pax", 1)
-            lines.append(f"💳 Итого: {msg.money(eff)} на человека, {msg.money(eff * pax)} " + ("на двоих" if pax == 2 else f"на {pax}"))
+            lines.append(f"💳 Итого: {msg.money(eff)} на человека, {on_two(eff)}")
             lines.append(f"Порог: {msg.money(cc['hot'])} за билет")
             text = msg.deal(kind, o, d, day, p,
                             prev=prev_min if prev_min and prev_min > p else None,
-                            stops=x.get("transfers"), dep_time=(x.get("departure_at") or "")[11:16] or None,
+                            stops=x.get("transfers"), dep_time=leg_info["dep_time"] or None,
                             carrier=carrier, cost_lines=lines, links=[("Авиасейлс", link)], cache_note=True)
             alerts.append((p, text))
     alerts.sort(key=lambda a: a[0])
     texts = [a[1] for a in alerts[: t["max_alerts"]]]
-    if minor:
-        rises = any(k == "rise" for k, _ in minor)
-        head = "📊 <b>ИЗМЕНЕНИЯ ЦЕН: ЕРЕВАН</b>" if rises else "📉 <b>ЦЕНА УПАЛА: ЕРЕВАН</b>"
-        texts.append(head + "\n\n" + "\n\n".join(line for _, line in minor) +
-                     "\n\n<i>До одной пересадки, цена билета на одного. Данные из кэша: проверьте цену перед покупкой</i>")
+
+    # лучшая пара туда-обратно (любые маршруты, с наземкой): только если укладывается в бюджет пары
+    pairs = sorted(((o_["eff"] + b_["eff"], o_, b_) for o_ in outs for b_ in backs), key=lambda x: x[0])
+    if pairs:
+        total, o_, b_ = pairs[0]
+        meta = state.setdefault("meta", {})
+        prev = meta.get("pair_alerted")
+        if total <= t["pair_hot"] and (prev is None or total < prev * (1 - t["new_min_drop"])):
+            meta["pair_alerted"] = total
+            kind = "fire" if total <= t["pair_fire"] else "low"
+            note = (f"💳 Итого {msg.money(total)} на человека, {on_two(total)}, с дорогой и едой\n"
+                    f"Порог пары: {msg.money(t['pair_hot'])} на человека")
+            texts.insert(0, msg.roundtrip(kind, o_, b_, total,
+                                          links_out=[("Авиасейлс", o_["link"])], links_back=[("Авиасейлс", b_["link"])],
+                                          prev=prev, note=note))
+        elif total > t["pair_hot"] * 1.1:
+            meta.pop("pair_alerted", None)  # пара ушла из бюджета: при возврате пришлем снова
     return texts
 
 

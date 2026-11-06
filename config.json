@@ -154,8 +154,8 @@
       "EVN-DME",
       "EVN-VKO"
     ],
-    "hot_rub": 30000,
-    "fire_rub": 20000
+    "hot_rub": 28000,
+    "fire_rub": 24000
   },
   "hot_rub": 15000,
   "fire_rub": 10000,
@@ -321,7 +321,26 @@
         "ratio": 0.2,
         "discount": 0.8
       }
-    }
+    },
+    "round_trip": {
+      "origin": "LED",
+      "skip": [
+        "EVN",
+        "TBS",
+        "KUT",
+        "LWN"
+      ],
+      "leg": 0.5,
+      "total": 0.45,
+      "boring_leg": 0.3,
+      "boring_total": 0.3,
+      "min_days": 2,
+      "max_days": 14,
+      "max_total": 40000,
+      "max_checks": 8,
+      "max_alerts": 5
+    },
+    "pax": 2
   },
   "pax": 2,
   "tp_watch": {
@@ -333,8 +352,6 @@
     ],
     "max_transfers": 1,
     "new_min_drop": 0.05,
-    "day_drop": 0.15,
-    "day_rise": 0.2,
     "max_alerts": 6,
     "routes": [
       {
@@ -367,6 +384,8 @@
         "extra": 1500,
         "extra_label": "🚌 Маршрутка Гюмри - Ереван и еда (оценка)"
       }
-    ]
+    ],
+    "pair_hot": 28000,
+    "pair_fire": 24000
   }
 }
