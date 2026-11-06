@@ -259,7 +259,7 @@ def city(code):
     return "MOW" if code in MOSCOW else code
 
 
-SENT_FILES = ("sent_watch.json", "sent_tp.json", "sent_anomaly.json")
+SENT_FILES = ("sent_watch.json", "sent_tp.json", "sent_anomaly.json", "sent_rail.json")
 
 
 def fresh_deal(data_dir, name, key, price, drop=0.03):
