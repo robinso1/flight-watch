@@ -360,7 +360,7 @@ def run(cfg):
             elif eff < k["min"] * drop:
                 alerts.append("drop")
             k["min"] = min(k["min"], eff)
-            lvl = hot_level(eff, cfg.get("hot_rub"), cfg.get("fire_rub"))
+            lvl = hot_level(eff, r.get("hot_rub", cfg.get("hot_rub")), r.get("fire_rub", cfg.get("fire_rub")))
             if lvl and (lvl > k.get("lvl", 0) or k["alerted"] is None or eff < k["alerted"] * drop):
                 hot_alerts.append(lvl)
                 k["alerted"] = eff

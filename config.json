@@ -65,7 +65,9 @@
       ],
       "extra": 2500,
       "extra_label": "🚆 Поезд СПб - Москва и еда",
-      "digest": false
+      "digest": false,
+      "hot_rub": 12500,
+      "fire_rub": 11000
     },
     {
       "name": "EVN-SVO",
@@ -93,7 +95,9 @@
       ],
       "extra": 2500,
       "extra_label": "🚆 Поезд СПб - Москва и еда",
-      "digest": false
+      "digest": false,
+      "hot_rub": 12500,
+      "fire_rub": 11000
     },
     {
       "name": "EVN-DME",
@@ -121,7 +125,9 @@
       ],
       "extra": 2500,
       "extra_label": "🚆 Поезд СПб - Москва и еда",
-      "digest": false
+      "digest": false,
+      "hot_rub": 12500,
+      "fire_rub": 11000
     },
     {
       "name": "EVN-VKO",
@@ -204,8 +210,8 @@
         "fire": 10000
       },
       "MOW-EVN": {
-        "send": 9500,
-        "fire": 8000
+        "send": 10000,
+        "fire": 8500
       }
     },
     "visa_free": [
@@ -363,8 +369,8 @@
       {
         "from": "MOW",
         "to": "EVN",
-        "hot": 9500,
-        "fire": 8000,
+        "hot": 10000,
+        "fire": 8500,
         "extra": 2500,
         "extra_label": "🚆 Поезд СПб - Москва и еда"
       },
