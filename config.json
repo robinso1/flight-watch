@@ -160,8 +160,8 @@
       "EVN-DME",
       "EVN-VKO"
     ],
-    "hot_rub": 23000,
-    "fire_rub": 20000
+    "hot_rub": 26000,
+    "fire_rub": 24000
   },
   "hot_rub": 12000,
   "fire_rub": 10000,
@@ -391,8 +391,8 @@
         "extra_label": "🚌 Маршрутка Гюмри - Ереван и еда (оценка)"
       }
     ],
-    "pair_hot": 23000,
-    "pair_fire": 20000
+    "pair_hot": 26000,
+    "pair_fire": 24000
   },
   "rail": {
     "home": {
