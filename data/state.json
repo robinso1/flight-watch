@@ -8,13 +8,13 @@
   },
   "DME-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 16321,
+   "last": 16460,
    "lvl": 1,
    "min": 14642
   },
   "DME-EVN|2026-12-17": {
    "alerted": null,
-   "last": 21917,
+   "last": 20223,
    "min": 17556
   },
   "DME-EVN|2026-12-18": {
@@ -24,42 +24,42 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 41854,
+   "last": 41962,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 27820,
+   "last": 27818,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 17918,
+   "last": 17917,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
    "alerted": null,
-   "last": 13638,
+   "last": 13673,
    "min": 15594
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 25865,
+   "last": 25932,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
    "alerted": null,
-   "last": 25865,
+   "last": 25932,
    "min": 17587
   },
   "EVN-VKO|2026-12-22": {
    "alerted": null,
-   "last": 17918,
+   "last": 17917,
    "min": 15594
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 14579,
+   "last": 14616,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
@@ -69,39 +69,39 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 25480,
+   "last": 25477,
    "min": 28254
   },
   "LED-TBS|2026-12-18": {
    "alerted": null,
-   "last": 33079,
+   "last": 33076,
    "min": 36379
   },
   "TBS-LED|2026-12-20": {
    "alerted": null,
-   "last": 30268,
+   "last": 30266,
    "min": 27377
   },
   "TBS-LED|2026-12-23": {
    "alerted": null,
-   "last": 41652,
+   "last": 41649,
    "min": 43966
   },
   "VKO-EVN|2026-12-15": {
    "alerted": 13236,
-   "last": 10725,
+   "last": 10817,
    "lvl": 1,
    "min": 13225
   },
   "VKO-EVN|2026-12-16": {
    "alerted": 14642,
-   "last": 16321,
+   "last": 16460,
    "lvl": 1,
    "min": 14642
   },
   "VKO-EVN|2026-12-17": {
    "alerted": null,
-   "last": 21917,
+   "last": 22104,
    "min": 17556
   },
   "VKO-EVN|2026-12-18": {
