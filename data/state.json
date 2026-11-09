@@ -24,7 +24,7 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 41855,
+   "last": 41856,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
@@ -69,12 +69,12 @@
   },
   "LED-TBS|2026-12-16": {
    "alerted": null,
-   "last": 25532,
+   "last": 25480,
    "min": 28254
   },
   "LED-TBS|2026-12-18": {
    "alerted": null,
-   "last": 33148,
+   "last": 33079,
    "min": 36379
   },
   "TBS-LED|2026-12-20": {
