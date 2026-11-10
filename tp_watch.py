@@ -37,6 +37,34 @@ NAMES = {"EVN": "Ереван", "LWN": "Гюмри", "TBS": "Тбилиси", "K
          "VOG": "Волгоград", "UFA": "Уфа", "OVB": "Новосибирск", "MCX": "Махачкала", "GRV": "Грозный", "NAL": "Нальчик"}
 
 
+CUR_NAME = {"RUB": "₽", "AMD": "драм", "GEL": "лари", "USD": "$"}
+
+
+def get_rates():
+    """Курс рубля к драму, лари и доллару: ЦБ РФ, запасной источник open.er-api.com."""
+    import re
+    import urllib.request
+    try:
+        raw = urllib.request.urlopen("https://www.cbr.ru/scripts/XML_daily.asp", timeout=20).read().decode("cp1251")
+        out = {}
+        for code in ("AMD", "GEL", "USD"):
+            m = re.search(rf"<CharCode>{code}</CharCode><Nominal>(\d+)</Nominal><Name>[^<]*</Name><Value>([\d,]+)", raw)
+            out[code] = float(m.group(2).replace(",", ".")) / int(m.group(1))
+        return out, "ЦБ РФ"
+    except Exception as e:
+        print("Курс ЦБ не получен:", type(e).__name__)
+    d = json.loads(urllib.request.urlopen("https://open.er-api.com/v6/latest/RUB", timeout=20).read().decode())
+    return {k: 1 / d["rates"][k] for k in ("AMD", "GEL", "USD")}, "open.er-api.com"
+
+
+def price_rub(p, rates):
+    """p: {"amount", "cur"} -> рубли и подпись вида '8 000 драм'."""
+    cur = p.get("cur", "RUB")
+    rub = p["amount"] if cur == "RUB" else p["amount"] * rates[cur]
+    local = "" if cur == "RUB" else f" ({p['amount']:,} {CUR_NAME[cur]})".replace(",", " ")
+    return int(round(rub)), local
+
+
 def name(code):
     return NAMES.get(code) or msg.city_of(code) or code
 
@@ -108,8 +136,8 @@ def build(rt, legs, rail_cal):
             p, real = train_price(rt, t["arr"], rail_cal)
             cost = p + rt["train_food"] + rt["moscow_transfer"]
             return cost, (f"🚆 Поезд Москва - Петербург {'по календарю Туту' if real else '(оценка)'} {msg.money(p)}, "
-                          f"еда и дорога до вокзала: +{msg.money(cost)}")
-        return rt["home_cost"], f"🚇 Из Пулково домой: +{msg.money(rt['home_cost'])}"
+                          f"{rt['moscow']['label']} {msg.money(rt['moscow_transfer'])}, еда {msg.money(rt['train_food'])}: +{msg.money(cost)}")
+        return rt["home_cost"], f"🚇 {rt['home']['label']}: +{msg.money(rt['home_cost'])}"
 
     for start, st in rt["starts"].items():
         for dst in ("LED", "MOW"):
@@ -215,6 +243,20 @@ def run(cfg, token, data_dir, fetcher=fetch, rail_fetch=None, notify=watch.tg_se
         rail_cal = rail_fetch("2000000", "2004000", f"{d0:%d.%m.%Y}")
     except Exception as e:
         print("Календарь поездов не ответил:", type(e).__name__, str(e)[:80])
+    # реальные цены наземки в местной валюте -> рубли по курсу дня (при сбое берем прошлый курс)
+    try:
+        rates, rates_src = get_rates()
+        state["rates"] = rates
+    except Exception as e:
+        rates, rates_src = state.get("rates") or rt["rates_fallback"], "прошлый курс"
+        print("Курс не получен, беру прошлый:", type(e).__name__)
+    print("Курс:", rates_src, {k: round(v, 4) for k, v in rates.items()})
+    rt = json.loads(json.dumps(rt))
+    for st in rt["starts"].values():
+        st["cost"], local = price_rub(st["price"], rates)
+        st["label"] = st["label"] + local
+    rt["home_cost"], _ = price_rub(rt["home"], rates)
+    rt["moscow_transfer"], _ = price_rub(rt["moscow"], rates)
     opts = build(rt, legs, rail_cal)
     print(f"Запросов: {len(pairs)}, с ошибками: {len(errors)}, вариантов: {len(opts)}")
     for o in pick(opts, 8):
@@ -256,6 +298,7 @@ def selftest():
         return data.get((o, dst), [])
 
     rail_fake = lambda a, b, day: {"2026-12-20": 1500, "2026-12-21": 2500}
+    globals()["get_rates"] = lambda: ({"AMD": 0.23, "GEL": 31.9, "USD": 82.8}, "тест")
     print("== проход 1: стартовое сообщение, лучший через Минводы, билет за 5 000 в 01:00 отсечен ==")
     run(cfg, "x", d, fake, rail_fake)
     print("== проход 2: цены те же, тишина ==")
