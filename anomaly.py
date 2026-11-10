@@ -168,6 +168,8 @@ def run(c, token, data_dir, offers, notify, fetch=None):
         norm, src = norm_for(gk, prices, hist, today, c)
         best = min(lst, key=lambda o: o["value"])
         vs = visa_status(dest, cities, c)
+        if dest in c.get("ignore_dests", []) or (c.get("visa_only_free") and vs == "visa"):
+            continue  # сейчас не интересно: Ереван уже куплен, визовые страны не рассматриваем
         rt = c.get("round_trip", {})
         if boring(c, dest, cities):
             # неинтересный город: только как пара туда-обратно с совсем аномальной ценой
@@ -207,6 +209,9 @@ def run(c, token, data_dir, offers, notify, fetch=None):
         if norm and origin == c.get("round_trip", {}).get("origin") and dest not in c.get("round_trip", {}).get("skip", []) \
                 and best["value"] <= norm * c["round_trip"]["leg"]:
             rt_cands.append((gk, best, norm, vs, False))
+        elif origin == c.get("round_trip", {}).get("origin") and dest in c.get("round_trip", {}).get("abs_total", {}) \
+                and best["value"] <= c["round_trip"]["abs_total"][dest] * 0.7:
+            rt_cands.append((gk, best, norm or best["value"] * 2, vs, False))  # Калининград: пара по абсолютной сумме
 
     for gk, lst in groups.items():
         m = min(o["value"] for o in lst)
@@ -296,7 +301,11 @@ def round_trips(c, token, cands, alerted, fetch):
         back = min(backs, key=lambda x: x["value"])
         leg_lim, total_lim = (rt["boring_leg"], rt["boring_total"]) if is_boring else (rt["leg"], rt["total"])
         total, norm_total = best["value"] + back["value"], norm + norm_back
-        if back["value"] > norm_back * leg_lim or total > norm_total * total_lim or total > rt["max_total"]:
+        ab = rt.get("abs_total", {}).get(dest)
+        if ab:
+            if total > ab:
+                continue
+        elif back["value"] > norm_back * leg_lim or total > norm_total * total_lim or total > rt["max_total"]:
             continue
         key = f"RT|{gk}|{best['depart_date']}|{back['depart_date']}"
         prev = alerted.get(key)
@@ -380,6 +389,8 @@ def hot_scan(c, token, data_dir, notify):
         norm = median([x["value"] for x in rows])
         disc = 1 - price / norm
         vs = visa_status(dest, cities, c)
+        if dest in c.get("ignore_dests", []) or (c.get("visa_only_free") and vs == "visa"):
+            continue
         need = c["hot_fire_discount"] if vs == "visa" else c["hot_discount"]
         if origin in c.get("strict_origins", {}):
             need = max(need, c["strict_origins"][origin]["discount"])

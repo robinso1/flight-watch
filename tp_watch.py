@@ -1,53 +1,44 @@
 #!/usr/bin/env python3
-"""Мониторинг связок Питер/Москва - Ереван, Кутаиси, Гюмри с пересадками (Travelpayouts, кэш Авиасейлса).
+"""Дорога домой после концерта: самый дешевый путь Ереван -> Петербург (Travelpayouts, кэш Авиасейлса).
 
 Запуск: python tp_watch.py            обычный проход
         python tp_watch.py --selftest офлайн-проверка на выдуманных ценах
-Даты туда берутся из anomaly.dest_windows.EVN, обратно и пороги из секции tp_watch в config.json.
-Пороги hot/fire сравниваются с ценой билета на одного, без надбавки на дорогу.
+Настройки в секции return_trip config.json.
 
-Алерты только реально выгодные:
-  билет в бюджете (hot/fire), повторно только если подешевел еще на new_min_drop;
-  лучшая пара туда-обратно с дорогой и едой не дороже pair_hot на человека.
+Варианты, которые перебираются (цена на одного, все в рублях):
+  прямой билет из стартового аэропорта (Ереван, Гюмри, Тбилиси, Кутаиси, Владикавказ) в Петербург или Москву;
+  два отдельных билета через город-хаб (Сочи, Минводы, Казань...), пересадка своими силами;
+  из Москвы дальше поезд (цена из календаря Туту на день прилета, запасная оценка, если календарь не ответил).
+К цене билетов добавляются: дорога до стартового аэропорта, еда в пути, лишняя еда и ночь при долгой пересадке,
+дорога от аэропорта домой. Итог сравнивается по полной стоимости.
+
+Сообщение приходит, только когда лучший итог стал ниже уже присланного на alert_drop (и один раз при запуске).
 """
 import json
 import os
 import sys
 import tempfile
-from datetime import date, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import msg
 import watch
 
 ROOT = Path(__file__).parent
-EVN = "EVN"
 CARRIERS = {"PC": "Pegasus", "DP": "Победа", "3F": "FlyOne Armenia", "S7": "S7", "5N": "Smartavia",
             "A4": "Азимут", "SU": "Аэрофлот", "FV": "Россия", "U6": "Уральские авиалинии", "TK": "Turkish Airlines",
             "J2": "AZAL", "N4": "Nordwind", "UT": "ЮТэйр", "RM": "Aircompany Armenia", "XC": "Corendon",
-            "ZF": "Azur Air", "WZ": "Red Wings", "6R": "Алроса", "HY": "Uzbekistan Airways", "KC": "Air Astana"}
+            "ZF": "Azur Air", "WZ": "Red Wings", "6R": "Алроса", "HY": "Uzbekistan Airways", "KC": "Air Astana",
+            "Y7": "NordStar", "EO": "Pegas Fly", "IO": "ИрАэро", "R3": "Якутия", "QH": "Air Kyrgyzstan",
+            "GH": "Глобус", "7R": "РусЛайн", "YC": "Ямал", "SZ": "Somon Air", "A9": "Georgian Airways"}
 API = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
+NAMES = {"EVN": "Ереван", "LWN": "Гюмри", "TBS": "Тбилиси", "KUT": "Кутаиси", "OGZ": "Владикавказ", "LED": "Петербург",
+         "MOW": "Москва", "AER": "Сочи", "MRV": "Минводы", "KZN": "Казань", "KUF": "Самара", "SVX": "Екатеринбург",
+         "VOG": "Волгоград", "UFA": "Уфа", "OVB": "Новосибирск", "MCX": "Махачкала", "GRV": "Грозный", "NAL": "Нальчик"}
 
 
-def day_range(a, b):
-    d, out = date.fromisoformat(a), []
-    while d <= date.fromisoformat(b):
-        out.append(d.isoformat())
-        d += timedelta(days=1)
-    return out
-
-
-def legs(cfg):
-    """[(ключ, откуда, куда, [даты], настройки маршрута)]: туда и обратно для каждого маршрута tp_watch.routes."""
-    t = cfg["tp_watch"]
-    w = cfg["anomaly"]["dest_windows"][EVN]
-    outs, backs = day_range(*w), t["back_dates"]
-    res = []
-    for r in t["routes"]:
-        a, b = r["from"], r["to"]
-        res.append((f"{a}-{b}", a, b, outs, r))
-        res.append((f"{b}-{a}", b, a, backs, r))
-    return res
+def name(code):
+    return NAMES.get(code) or msg.city_of(code) or code
 
 
 def fetch(token, origin, dest, months):
@@ -65,147 +56,211 @@ def fetch(token, origin, dest, months):
     return rows
 
 
-def best_by_day(rows, dates, max_tr):
-    best = {}
+def parse(x):
+    """Билет из ответа API: время вылета и прилета (с поясом), цена, перевозчик, ссылка."""
+    try:
+        dep = datetime.fromisoformat(x["departure_at"])
+    except (KeyError, ValueError, TypeError):
+        return None
+    mins = x.get("duration") or x.get("duration_to") or 0
+    arr = dep + timedelta(minutes=mins) if mins else None
+    o, d = x.get("origin"), x.get("destination")
+    link = ("https://www.aviasales.ru" + x["link"]) if x.get("link") else \
+        f"https://www.aviasales.ru/search/{o}{dep:%d%m}{d}1"
+    return {"origin": o, "dest": d, "dep": dep, "arr": arr, "mins": mins, "price": x["price"],
+            "stops": x.get("transfers") or 0, "carrier": CARRIERS.get(x.get("airline"), x.get("airline")), "link": link}
+
+
+def tickets(rows, rt, earliest=None, origin=None, dest=None):
+    out = []
+    last = datetime.fromisoformat(rt["last_day"] + "T23:59:59+03:00")
     for x in rows:
-        day = (x.get("departure_at") or "")[:10]
-        if day in dates and x.get("price") and (x.get("transfers") or 0) <= max_tr:
-            if day not in best or x["price"] < best[day]["price"]:
-                best[day] = x
-    return best
-
-
-def hm(minutes):
-    return f"{minutes // 60} ч {minutes % 60:02d} мин" if minutes else None
-
-
-def migrate(state):
-    if state.get("v") == 2:
-        return state
-    keys = {k: {"min": v["price"], "last": v["price"], "days": {}} for k, v in state.items() if isinstance(v, dict) and v.get("price")}
-    return {"v": 2, "keys": keys, "meta": {}}
-
-
-def process(cfg, data, state, today, data_dir=None):
-    """data: {ключ_маршрута: [строки API]}. Меняет state, возвращает тексты алертов.
-    Шлем только реально выгодное: билет в бюджете и пару туда-обратно в бюджете. Просто падения цены не шлем."""
-    t = cfg["tp_watch"]
-    pax = cfg.get("pax", 1)
-    on_two = lambda v: f"{msg.money(v * pax)} " + ("на двоих" if pax == 2 else f"на {pax}")
-    yesterday = (date.fromisoformat(today) - timedelta(days=1)).isoformat()
-    alerts, outs, backs = [], [], []
-    for key, o, d, dates, cc in legs(cfg):
-        if key not in data:
+        if not x.get("price") or (x.get("transfers") or 0) > rt["max_transfers"]:
             continue
-        for day, x in sorted(best_by_day(data[key], dates, t["max_transfers"]).items()):
-            p = x["price"]
-            k = state["keys"].setdefault(f"{key}|{day}", {"min": None, "last": None, "days": {}})
-            days = k.setdefault("days", {})
-            prev_min = k["min"]
-            link = ("https://www.aviasales.ru" + x["link"]) if x.get("link") else f"https://www.aviasales.ru/search/{o}{day[8:10]}{day[5:7]}{d}1"
-            carrier = CARRIERS.get(x.get("airline"), x.get("airline"))
-            eff = p + cc.get("extra", 0)
-            leg_info = {"origin": o, "dest": d, "date": day, "price": p, "eff": eff, "carrier": carrier,
-                        "dep_time": (x.get("departure_at") or "")[11:16], "stops": x.get("transfers"), "link": link}
-            (outs if o == cc["from"] else backs).append(leg_info)
+        x = dict(x, origin=x.get("origin") or origin, destination=x.get("destination") or dest)
+        t = parse(x)
+        if not t or t["dep"] > last + timedelta(days=1) or (earliest and t["dep"] < earliest):
+            continue
+        out.append(t)
+    return out
 
-            kind = None
-            lvl = 2 if p <= cc["fire"] else 1 if p <= cc["hot"] else 0
-            if lvl and (lvl > k.get("lvl", 0) or not k.get("alerted") or p < k["alerted"] * (1 - t["new_min_drop"])):
-                kind = "fire" if lvl == 2 else "low"
-                k["alerted"], k["lvl"] = p, lvl
-            k["min"] = p if prev_min is None else min(prev_min, p)
-            k["last"] = p
-            days[today] = min(days.get(today, p), p)
-            for old in [x for x in days if x < yesterday]:
-                del days[old]
-            if kind and data_dir and not watch.fresh_deal(data_dir, "tp", watch.deal_key(o, d, day), p):
-                kind = None
-            if not kind:
+
+def train_price(rt, arr, rail_cal):
+    """Поезд Москва -> Петербург после прилета: минимум календаря Туту на день прилета или следующий."""
+    if arr is None:
+        return rt["train_fallback"], False
+    msk = arr.astimezone(timezone(timedelta(hours=3)))
+    day = msk.date() if msk.hour < 21 else msk.date() + timedelta(days=1)
+    prices = [rail_cal.get(d.isoformat()) for d in (day, day + timedelta(days=1))]
+    prices = [p for p in prices if p]
+    if not prices:
+        return rt["train_fallback"], False
+    return min(prices), True
+
+
+def build(rt, legs, rail_cal):
+    """legs: {(откуда, куда): [билеты]}. Возвращает все варианты с полной стоимостью, по возрастанию."""
+    opts = []
+
+    def finish(t):
+        if t["dest"] == "MOW":
+            p, real = train_price(rt, t["arr"], rail_cal)
+            cost = p + rt["train_food"] + rt["moscow_transfer"]
+            return cost, (f"🚆 Поезд Москва - Петербург {'по календарю Туту' if real else '(оценка)'} {msg.money(p)}, "
+                          f"еда и дорога до вокзала: +{msg.money(cost)}")
+        return rt["home_cost"], f"🚇 Из Пулково домой: +{msg.money(rt['home_cost'])}"
+
+    for start, st in rt["starts"].items():
+        for dst in ("LED", "MOW"):
+            for t in legs.get((start, dst), []):
+                fin, fin_line = finish(t)
+                extra = st["cost"] + rt["food"] + fin
+                opts.append({"legs": [t], "total": t["price"] + extra, "lines": [
+                    f"{st['label']}: +{msg.money(st['cost'])}", f"🍞 Еда в пути: +{msg.money(rt['food'])}", fin_line]})
+    # два отдельных билета через хаб, только из Еревана
+    st = rt["starts"]["EVN"]
+    for hub in rt["hubs"]:
+        for a in legs.get(("EVN", hub), []):
+            if a["arr"] is None:
                 continue
-            lines = []
-            if hm(x.get("duration") or x.get("duration_to")):
-                lines.append(f"⏱ В пути: {hm(x.get('duration') or x.get('duration_to'))}")
-            if cc.get("extra"):
-                lines.append(f"{cc.get('extra_label', 'Дорога и еда')}: +{msg.money(cc['extra'])}")
-            lines.append(f"💳 Итого: {msg.money(eff)} на человека, {on_two(eff)}")
-            lines.append(f"Порог: {msg.money(cc['hot'])} за билет")
-            text = msg.deal(kind, o, d, day, p,
-                            prev=prev_min if prev_min and prev_min > p else None,
-                            stops=x.get("transfers"), dep_time=leg_info["dep_time"] or None,
-                            carrier=carrier, cost_lines=lines, links=[("Авиасейлс", link)], cache_note=True)
-            alerts.append((p, text))
-    alerts.sort(key=lambda a: a[0])
-    texts = [a[1] for a in alerts[: t["max_alerts"]]]
-
-    # лучшая пара туда-обратно (любые маршруты, с наземкой): только если укладывается в бюджет пары
-    pairs = sorted(((o_["eff"] + b_["eff"], o_, b_) for o_ in outs for b_ in backs), key=lambda x: x[0])
-    if pairs:
-        total, o_, b_ = pairs[0]
-        meta = state.setdefault("meta", {})
-        prev = meta.get("pair_alerted")
-        if total <= t["pair_hot"] and (prev is None or total < prev * (1 - t["new_min_drop"])) and \
-                (not data_dir or watch.fresh_deal(data_dir, "tp", "PAIR|" + watch.deal_key(o_["origin"], b_["dest"], o_["date"], b_["date"]), total)):
-            meta["pair_alerted"] = total
-            kind = "fire" if total <= t["pair_fire"] else "low"
-            note = (f"💳 Итого {msg.money(total)} на человека, {on_two(total)}, с дорогой и едой\n"
-                    f"Порог пары: {msg.money(t['pair_hot'])} на человека")
-            texts.insert(0, msg.roundtrip(kind, o_, b_, total,
-                                          links_out=[("Авиасейлс", o_["link"])], links_back=[("Авиасейлс", b_["link"])],
-                                          prev=prev, note=note))
-    return texts
+            for dst in ("LED", "MOW"):
+                for b in legs.get((hub, dst), []):
+                    wait = (b["dep"] - a["arr"]).total_seconds() / 3600
+                    if not (rt["min_connection_h"] <= wait <= rt["max_connection_h"]):
+                        continue
+                    fin, fin_line = finish(b)
+                    long_wait = rt["long_wait_cost"] if wait >= rt["long_wait_h"] else 0
+                    food = rt["food"] + rt["transfer_food"] + long_wait
+                    extra = st["cost"] + food + fin
+                    lines = [f"{st['label']}: +{msg.money(st['cost'])}",
+                             f"🍞 Еда в пути и пересадка {round(wait)} ч в городе {name(hub)}: +{msg.money(food)}",
+                             fin_line, "⚠️ Два отдельных билета: багаж и стыковку никто не гарантирует"]
+                    opts.append({"legs": [a, b], "total": a["price"] + b["price"] + extra, "lines": lines})
+    opts.sort(key=lambda o: (o["total"], o["legs"][0]["dep"]))
+    return opts
 
 
-def run(cfg, token, data_dir, fetcher=fetch, notify=watch.tg_send):
+def leg_line(t):
+    st = "прямой" if not t["stops"] else f"{t['stops']} перес."
+    dur = f", в пути {t['mins'] // 60} ч {t['mins'] % 60:02d} мин" if t["mins"] else ""
+    return (f"✈️ {name(t['origin'])} → {name(t['dest'])}, {msg.date_short(t['dep'].date().isoformat())} {t['dep']:%H:%M}: "
+            f"<b>{msg.money(t['price'])}</b> · {msg.esc(t['carrier'] or '')}, {st}{dur} · {msg.a(t['link'], 'билет')}")
+
+
+def opt_block(o, pax, title):
+    lines = [f"<b>{title}: {msg.money(o['total'])}</b> на человека, {msg.money(o['total'] * pax)} на двоих"]
+    lines += [leg_line(t) for t in o["legs"]]
+    lines += [msg.esc(x) for x in o["lines"]]
+    return "\n".join(lines)
+
+
+def pick(opts, top):
+    """Лучшие варианты без повторов маршрута."""
+    seen, out = set(), []
+    for o in opts:
+        sig = tuple((t["origin"], t["dest"]) for t in o["legs"])
+        if sig in seen:
+            continue
+        seen.add(sig)
+        out.append(o)
+        if len(out) == top:
+            break
+    return out
+
+
+def report(rt, opts, prev, pax):
+    best = opts[0]
+    head = "🚨🔥🚨 <b>ДЕШЕВО ДОМОЙ - БЕРИ</b> 🚨🔥🚨" if best["total"] <= rt["target"] else "🛬 <b>ДОРОГА ДОМОЙ: НОВЫЙ МИНИМУМ</b>"
+    blocks = [head]
+    if prev:
+        blocks.append(f"Было {msg.money(prev)}, стало {msg.money(best['total'])} на человека (-{msg.money(prev - best['total'])})")
+    top = pick(opts, rt["top"])
+    for i, o in enumerate(top):
+        blocks.append(opt_block(o, pax, "Лучший" if i == 0 else f"Вариант {i + 1}"))
+    first_day = rt["first_day"]
+    early = next((o for o in opts if o["legs"][0]["dep"].date().isoformat() == first_day), None)
+    if early and all(early is not o for o in top):
+        blocks.append(opt_block(early, pax, f"Самый ранний ({msg.date_short(first_day)})"))
+    blocks.append(f"<i>Полная цена: билеты, дорога до аэропорта и от него, еда. Вылет не раньше {msg.date_short(first_day)} 03:00. "
+                  f"Данные из кэша Авиасейлса: проверьте цену перед покупкой</i>")
+    return "\n\n".join(blocks)
+
+
+def run(cfg, token, data_dir, fetcher=fetch, rail_fetch=None, notify=watch.tg_send):
+    rt = cfg["return_trip"]
+    pax = cfg.get("pax", 1)
     path = data_dir / "tp_state.json"
-    state = migrate(watch.load_json(path, {}))
-    today = watch.now().strftime("%Y-%m-%d")
-    data, errors = {}, []
-    lg = legs(cfg)
-    for key, o, d, dates, _ in lg:
+    state = watch.load_json(path, {})
+    if state.get("v") != 3:
+        state = {"v": 3}
+    months = sorted({rt["first_day"][:7], rt["last_day"][:7]})
+    pairs = [(s, d) for s in rt["starts"] for d in ("LED", "MOW")]
+    pairs += [("EVN", h) for h in rt["hubs"]] + [(h, d) for h in rt["hubs"] for d in ("LED", "MOW")]
+    legs, errors = {}, []
+    for o, d in pairs:
+        earliest = datetime.fromisoformat(rt["starts"][o]["earliest"]) if o in rt["starts"] else None
         try:
-            data[key] = fetcher(token, o, d, sorted({x[:7] for x in dates}))
+            legs[(o, d)] = tickets(fetcher(token, o, d, months), rt, earliest, o, d)
         except Exception as e:
-            errors.append(f"{key}: {type(e).__name__} {str(e)[:120]}")
+            errors.append(f"{o}-{d}: {type(e).__name__} {str(e)[:100]}")
     for e in errors:
         print("Ошибка API:", e)
-    texts = process(cfg, data, state, today, data_dir)
-    for text in texts:
-        notify(text, html=True)
-    watch.save_json(path, state)
-    for key, _, _, dates, _ in lg:
-        for day in dates:
-            k = state["keys"].get(f"{key}|{day}")
-            if k and k.get("last"):
-                print(f"{key} {day}: {k['last']} (мин {k['min']})")
-    print(f"Маршрутов: {len(lg)}, с ошибками: {len(errors)}, алертов: {len(texts)}")
-    if errors and len(errors) == len(lg):
+    rail_cal = {}
+    try:
+        if rail_fetch is None:
+            import rail
+            rail_fetch = rail.fetch
+        d0 = datetime.fromisoformat(rt["first_day"])
+        rail_cal = rail_fetch("2000000", "2004000", f"{d0:%d.%m.%Y}")
+    except Exception as e:
+        print("Календарь поездов не ответил:", type(e).__name__, str(e)[:80])
+    opts = build(rt, legs, rail_cal)
+    print(f"Запросов: {len(pairs)}, с ошибками: {len(errors)}, вариантов: {len(opts)}")
+    for o in pick(opts, 8):
+        print(o["total"], " + ".join(f"{t['origin']}-{t['dest']} {t['dep']:%d.%m %H:%M} {t['price']} {t['carrier']}" for t in o["legs"]))
+    if errors and len(errors) == len(pairs):
+        watch.save_json(path, state)
         sys.exit(1)
+    if opts:
+        best = opts[0]["total"]
+        prev = state.get("best_sent")
+        if prev is None or best < prev * (1 - rt["alert_drop"]):
+            notify(report(rt, opts, prev, pax), html=True)
+            state["best_sent"] = best
+        state["best_now"] = best
+        state["checked"] = watch.now().strftime("%Y-%m-%d %H:%M")
+    watch.save_json(path, state)
 
 
 def selftest():
     watch.DRY = True
     d = Path(tempfile.mkdtemp())
     cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
-    prices = {"LED-EVN": 16000, "EVN-LED": 18000, "MOW-EVN": 12000, "EVN-MOW": 14000, "LED-KUT": 9000, "KUT-LED": 9000, "LED-LWN": 13000, "LWN-LED": 13000}
     k = {"v": 1.0}
 
-    def fake(token, o, dest, months):
-        key = f"{o}-{dest}"
-        dates = next(x[3] for x in legs(cfg) if x[0] == key)
-        rows = [{"departure_at": f"{day}T15:35:00+03:00", "price": int(prices[key] * k["v"]) + i, "transfers": 1,
-                 "airline": "PC", "duration_to": 595, "link": f"/search/{o}{day[8:10]}{day[5:7]}{dest}1"}
-                for i, day in enumerate(dates)]
-        rows.append({"departure_at": f"{dates[0]}T10:00:00+03:00", "price": 1000, "transfers": 2, "airline": "XX"})
-        return rows
+    def row(o, dst, when, price, mins, tr=0, al="PC"):
+        return {"origin": o, "destination": dst, "departure_at": when, "price": int(price * k["v"]), "duration": mins,
+                "transfers": tr, "airline": al}
 
-    print("== проход 1: цены выше порогов, алертов нет (2 пересадки за 1 000 отсекаются) ==")
-    run(cfg, "x", d, fake)
-    print("== проход 2: -12%, Москва 10 560 ниже порога 11 500, Питер и обратно - новый минимум ==")
-    k["v"] = 0.88
-    run(cfg, "x", d, fake)
-    print("== проход 3: те же цены, алертов нет ==")
-    run(cfg, "x", d, fake)
+    def fake(token, o, dst, months):
+        data = {
+            ("EVN", "LED"): [row("EVN", "LED", "2026-12-20T04:15:00+04:00", 18000, 600, 1),
+                             row("EVN", "LED", "2026-12-20T01:00:00+04:00", 5000, 300)],  # до 03:00 после концерта: отсечь
+            ("EVN", "MOW"): [row("EVN", "MOW", "2026-12-20T03:50:00+04:00", 11000, 210, 0, "UT")],
+            ("EVN", "MRV"): [row("EVN", "MRV", "2026-12-20T08:00:00+04:00", 4000, 90, 0, "A4")],
+            ("MRV", "LED"): [row("MRV", "LED", "2026-12-20T15:00:00+03:00", 5000, 210, 0, "DP")],
+            ("TBS", "LED"): [row("TBS", "LED", "2026-12-21T12:00:00+04:00", 9000, 330, 1, "J2")],
+        }
+        return data.get((o, dst), [])
+
+    rail_fake = lambda a, b, day: {"2026-12-20": 1500, "2026-12-21": 2500}
+    print("== проход 1: стартовое сообщение, лучший через Минводы, билет за 5 000 в 01:00 отсечен ==")
+    run(cfg, "x", d, fake, rail_fake)
+    print("== проход 2: цены те же, тишина ==")
+    run(cfg, "x", d, fake, rail_fake)
+    print("== проход 3: все на 10% дешевле, сообщение о новом минимуме ==")
+    k["v"] = 0.9
+    run(cfg, "x", d, fake, rail_fake)
 
 
 def main():

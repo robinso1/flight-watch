@@ -335,6 +335,8 @@ def run(cfg):
                 airlines_seen.update(a.strip() for a in o["airlines"].split(","))
             unpriced = [o for o in offers if not o["price"]]
             offers = [o for o in offers if o["price"]]
+            if r.get("earliest"):  # например, после концерта: не раньше 20.12 03:00
+                offers = [o for o in offers if f"{day}T{o['dep'][-5:]}" >= r["earliest"]]
             if unpriced:
                 unpriced_seen[key] = unpriced
             if not offers:
@@ -485,7 +487,8 @@ def selftest():
     DATA = Path(tempfile.mkdtemp())
     cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
     cfg["hot_rub"], cfg["fire_rub"] = 10000, 7000
-    cfg["combo"]["hot_rub"], cfg["combo"]["fire_rub"] = 15000, 11000
+    if cfg.get("combo"):
+        cfg["combo"]["hot_rub"], cfg["combo"]["fire_rub"] = 15000, 11000
     for r in cfg["routes"]:
         r["dates"] = [(now().date() + timedelta(days=d)).isoformat() for d in (60, 61)]
     prices = {"LED-EVN": 7000, "EVN-LED": 8500, "SVO-EVN": 3500, "EVN-SVO": 4200}

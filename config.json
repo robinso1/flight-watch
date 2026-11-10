@@ -6,17 +6,6 @@
   "drop_percent": 3,
   "routes": [
     {
-      "name": "LED-EVN",
-      "origin": "LED",
-      "dest": "EVN",
-      "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
-      ]
-    },
-    {
       "name": "EVN-LED",
       "origin": "EVN",
       "dest": "LED",
@@ -25,20 +14,8 @@
         "2026-12-21",
         "2026-12-22",
         "2026-12-23"
-      ]
-    },
-    {
-      "name": "LED-TBS",
-      "origin": "LED",
-      "dest": "TBS",
-      "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
       ],
-      "extra": 3500,
-      "extra_label": "🚌 Автобус Тбилиси - Ереван и еда"
+      "earliest": "2026-12-20T03:00"
     },
     {
       "name": "TBS-LED",
@@ -51,23 +28,8 @@
         "2026-12-23"
       ],
       "extra": 3500,
-      "extra_label": "🚌 Автобус Тбилиси - Ереван и еда"
-    },
-    {
-      "name": "SVO-EVN",
-      "origin": "SVO",
-      "dest": "EVN",
-      "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
-      ],
-      "extra": 2500,
-      "extra_label": "🚆 Поезд СПб - Москва и еда",
-      "digest": false,
-      "hot_rub": 12500,
-      "fire_rub": 11000
+      "extra_label": "🚌 Автобус Тбилиси - Ереван и еда",
+      "earliest": "2026-12-20T10:00"
     },
     {
       "name": "EVN-SVO",
@@ -81,21 +43,8 @@
       ],
       "extra": 2500,
       "extra_label": "🚆 Поезд СПб - Москва и еда",
-      "digest": false
-    },
-    {
-      "name": "DME-EVN",
-      "origin": "DME",
-      "dest": "EVN",
-      "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
-      ],
-      "extra": 2500,
-      "extra_label": "🚆 Поезд СПб - Москва и еда",
       "digest": false,
+      "earliest": "2026-12-20T03:00",
       "hot_rub": 12500,
       "fire_rub": 11000
     },
@@ -111,21 +60,8 @@
       ],
       "extra": 2500,
       "extra_label": "🚆 Поезд СПб - Москва и еда",
-      "digest": false
-    },
-    {
-      "name": "VKO-EVN",
-      "origin": "VKO",
-      "dest": "EVN",
-      "dates": [
-        "2026-12-15",
-        "2026-12-16",
-        "2026-12-17",
-        "2026-12-18"
-      ],
-      "extra": 2500,
-      "extra_label": "🚆 Поезд СПб - Москва и еда",
       "digest": false,
+      "earliest": "2026-12-20T03:00",
       "hot_rub": 12500,
       "fire_rub": 11000
     },
@@ -141,77 +77,31 @@
       ],
       "extra": 2500,
       "extra_label": "🚆 Поезд СПб - Москва и еда",
-      "digest": false
+      "digest": false,
+      "earliest": "2026-12-20T03:00",
+      "hot_rub": 12500,
+      "fire_rub": 11000
     }
   ],
-  "combo": {
-    "out": "LED-EVN",
-    "back": "EVN-LED",
-    "min_stay_days": 2,
-    "outs": [
-      "LED-EVN",
-      "SVO-EVN",
-      "DME-EVN",
-      "VKO-EVN"
-    ],
-    "backs": [
-      "EVN-LED",
-      "EVN-SVO",
-      "EVN-DME",
-      "EVN-VKO"
-    ],
-    "hot_rub": 26000,
-    "fire_rub": 24000
-  },
   "hot_rub": 12000,
   "fire_rub": 10000,
   "anomaly": {
     "origins": [
-      "LED",
-      "MOW"
+      "LED"
     ],
     "priority": [
-      "LED-KGD",
-      "LED-EVN",
-      "LED-TBS",
-      "LED-LWN",
-      "MOW-EVN"
+      "LED-KGD"
     ],
     "priority_ratio": 0.5,
-    "ratio": 0.4,
-    "fire_ratio": 0.3,
+    "ratio": 0.25,
+    "fire_ratio": 0.2,
     "max_price_rub": 30000,
     "max_changes": 1,
     "abs_rub": {
       "LED-KGD": {
-        "send": 2000,
-        "fire": 1500,
+        "send": 1000,
+        "fire": 800,
         "norm": 3000
-      },
-      "LED-AYT": {
-        "send": 6000,
-        "fire": 5000,
-        "norm": 10000
-      },
-      "LED-AER": {
-        "send": 2500,
-        "fire": 2000
-      },
-      "LED-MCX": {
-        "send": 2500,
-        "fire": 2000
-      },
-      "LED-ARH": {
-        "send": 2500,
-        "fire": 2000
-      },
-      "LED-EVN": {
-        "send": 12000,
-        "fire": 10000
-      },
-      "MOW-EVN": {
-        "send": 10000,
-        "fire": 8500
       }
     },
     "visa_free": [
@@ -334,66 +224,35 @@
         "EVN",
         "TBS",
         "KUT",
-        "LWN"
+        "LWN",
+        "AYT"
       ],
-      "leg": 0.5,
-      "total": 0.45,
-      "boring_leg": 0.3,
-      "boring_total": 0.3,
+      "leg": 0.35,
+      "total": 0.3,
+      "boring_leg": 0.25,
+      "boring_total": 0.25,
       "min_days": 2,
       "max_days": 14,
       "max_total": 40000,
       "max_checks": 8,
-      "max_alerts": 5
+      "max_alerts": 5,
+      "abs_total": {
+        "KGD": 3000
+      }
     },
-    "pax": 2
+    "pax": 2,
+    "hot_discount": 0.75,
+    "hot_fire_discount": 0.8,
+    "visa_only_free": true,
+    "ignore_dests": [
+      "EVN",
+      "LWN",
+      "TBS",
+      "KUT",
+      "AYT"
+    ]
   },
   "pax": 2,
-  "tp_watch": {
-    "back_dates": [
-      "2026-12-20",
-      "2026-12-21",
-      "2026-12-22",
-      "2026-12-23"
-    ],
-    "max_transfers": 1,
-    "new_min_drop": 0.05,
-    "max_alerts": 6,
-    "routes": [
-      {
-        "from": "LED",
-        "to": "EVN",
-        "hot": 12000,
-        "fire": 10000
-      },
-      {
-        "from": "MOW",
-        "to": "EVN",
-        "hot": 10000,
-        "fire": 8500,
-        "extra": 2500,
-        "extra_label": "🚆 Поезд СПб - Москва и еда"
-      },
-      {
-        "from": "LED",
-        "to": "KUT",
-        "hot": 7000,
-        "fire": 5000,
-        "extra": 5000,
-        "extra_label": "🚌 Маршрутка Кутаиси - Тбилиси - Ереван и еда (оценка)"
-      },
-      {
-        "from": "LED",
-        "to": "LWN",
-        "hot": 10500,
-        "fire": 8500,
-        "extra": 1500,
-        "extra_label": "🚌 Маршрутка Гюмри - Ереван и еда (оценка)"
-      }
-    ],
-    "pair_hot": 26000,
-    "pair_fire": 24000
-  },
   "rail": {
     "home": {
       "code": "2004000",
@@ -429,5 +288,61 @@
     "p10_ratio": 0.7,
     "min_days": 20,
     "max_alerts": 6
+  },
+  "return_trip": {
+    "first_day": "2026-12-20",
+    "last_day": "2026-12-23",
+    "starts": {
+      "EVN": {
+        "cost": 500,
+        "earliest": "2026-12-20T03:00:00+04:00",
+        "label": "🚕 Такси или автобус до аэропорта Звартноц"
+      },
+      "LWN": {
+        "cost": 1500,
+        "earliest": "2026-12-20T07:00:00+04:00",
+        "label": "🚌 Маршрутка Ереван - Гюмри (оценка)"
+      },
+      "TBS": {
+        "cost": 3500,
+        "earliest": "2026-12-20T10:00:00+04:00",
+        "label": "🚌 Автобус или ночной поезд Ереван - Тбилиси (оценка)"
+      },
+      "KUT": {
+        "cost": 5000,
+        "earliest": "2026-12-20T14:00:00+04:00",
+        "label": "🚌 Маршрутка Ереван - Тбилиси - Кутаиси (оценка)"
+      },
+      "OGZ": {
+        "cost": 5000,
+        "earliest": "2026-12-20T18:00:00+03:00",
+        "label": "🚐 Ереван - Владикавказ через Верхний Ларс (оценка, бывают очереди)"
+      }
+    },
+    "hubs": [
+      "AER",
+      "MRV",
+      "KZN",
+      "KUF",
+      "SVX",
+      "VOG",
+      "UFA",
+      "MCX",
+      "OVB"
+    ],
+    "max_transfers": 1,
+    "food": 700,
+    "transfer_food": 500,
+    "long_wait_h": 10,
+    "long_wait_cost": 1000,
+    "min_connection_h": 3,
+    "max_connection_h": 30,
+    "home_cost": 200,
+    "train_food": 500,
+    "moscow_transfer": 300,
+    "train_fallback": 2500,
+    "alert_drop": 0.03,
+    "target": 12000,
+    "top": 4
   }
 }
