@@ -71,15 +71,16 @@ def parse(x):
             "stops": x.get("transfers") or 0, "carrier": CARRIERS.get(x.get("airline"), x.get("airline")), "link": link}
 
 
-def tickets(rows, rt, earliest=None, origin=None, dest=None):
+def tickets(rows, rt, earliest=None, origin=None, dest=None, next_day=False):
+    """next_day: для второго билета через хаб разрешен вылет и на день позже последнего дня окна."""
     out = []
-    last = datetime.fromisoformat(rt["last_day"] + "T23:59:59+03:00")
+    last = datetime.fromisoformat(rt["last_day"] + "T23:59:59+04:00") + timedelta(days=1 if next_day else 0)
     for x in rows:
         if not x.get("price") or (x.get("transfers") or 0) > rt["max_transfers"]:
             continue
         x = dict(x, origin=x.get("origin") or origin, destination=x.get("destination") or dest)
         t = parse(x)
-        if not t or t["dep"] > last + timedelta(days=1) or (earliest and t["dep"] < earliest):
+        if not t or t["dep"] > last or (earliest and t["dep"] < earliest):
             continue
         out.append(t)
     return out
@@ -200,7 +201,7 @@ def run(cfg, token, data_dir, fetcher=fetch, rail_fetch=None, notify=watch.tg_se
     for o, d in pairs:
         earliest = datetime.fromisoformat(rt["starts"][o]["earliest"]) if o in rt["starts"] else None
         try:
-            legs[(o, d)] = tickets(fetcher(token, o, d, months), rt, earliest, o, d)
+            legs[(o, d)] = tickets(fetcher(token, o, d, months), rt, earliest, o, d, next_day=o in rt["hubs"])
         except Exception as e:
             errors.append(f"{o}-{d}: {type(e).__name__} {str(e)[:100]}")
     for e in errors:
@@ -249,7 +250,8 @@ def selftest():
             ("EVN", "MOW"): [row("EVN", "MOW", "2026-12-20T03:50:00+04:00", 11000, 210, 0, "UT")],
             ("EVN", "MRV"): [row("EVN", "MRV", "2026-12-20T08:00:00+04:00", 4000, 90, 0, "A4")],
             ("MRV", "LED"): [row("MRV", "LED", "2026-12-20T15:00:00+03:00", 5000, 210, 0, "DP")],
-            ("TBS", "LED"): [row("TBS", "LED", "2026-12-21T12:00:00+04:00", 9000, 330, 1, "J2")],
+            ("TBS", "LED"): [row("TBS", "LED", "2026-12-21T12:00:00+04:00", 9000, 330, 1, "J2"),
+                             row("TBS", "LED", "2026-12-24T12:00:00+04:00", 3000, 330, 1, "J2")],  # после окна: отсечь
         }
         return data.get((o, dst), [])
 
