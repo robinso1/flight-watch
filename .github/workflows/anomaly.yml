@@ -26,6 +26,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Find anomalies
+        id: bot
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
@@ -46,12 +47,12 @@ jobs:
           for i in 1 2 3 4 5; do
             git pull --rebase -X theirs && git push && exit 0
             git rebase --abort 2>/dev/null || true
-            sleep 5
+            sleep $((i * 20))
           done
           exit 1
 
       - name: Уведомить о сбое
-        if: failure()
+        if: failure() && steps.bot.outcome == 'failure'
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}

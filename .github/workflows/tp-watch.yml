@@ -22,7 +22,8 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt requests
-      - run: python tp_watch.py
+      - id: bot
+        run: python tp_watch.py
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
@@ -33,11 +34,11 @@ jobs:
           git add data/tp_state.json data/sent_tp.json 2>/dev/null || git add data/tp_state.json
           git diff --cached --quiet && exit 0
           git commit -m "tp state"
-          for i in 1 2 3 4 5; do git pull --rebase -X theirs && git push && exit 0; sleep 5; done
+          for i in 1 2 3 4 5; do git pull --rebase -X theirs && git push && exit 0; sleep $((i * 20)); done
           exit 1
 
       - name: Уведомить о сбое
-        if: failure()
+        if: failure() && steps.bot.outcome == 'failure'
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
