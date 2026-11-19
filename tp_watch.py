@@ -7,12 +7,15 @@
 
 Варианты, которые перебираются (цена на одного, все в рублях):
   прямой билет из стартового аэропорта (Ереван, Гюмри, Тбилиси, Кутаиси, Владикавказ) в Петербург или Москву;
-  два отдельных билета через город-хаб (Сочи, Минводы, Казань...), пересадка своими силами;
+  билет с пересадками (до max_transfers) одним заказом;
+  два отдельных билета через город-хаб (Москва, Сочи, Минводы, Минск, Стамбул...) из любого старта, пересадка своими силами;
   из Москвы дальше поезд (цена из календаря Туту на день прилета, запасная оценка, если календарь не ответил).
 К цене билетов добавляются: дорога до стартового аэропорта, еда в пути, лишняя еда и ночь при долгой пересадке,
 дорога от аэропорта домой. Итог сравнивается по полной стоимости.
 
-Сообщение приходит, только когда лучший итог стал ниже уже присланного на alert_drop (и один раз при запуске).
+Каждый вариант получает класс: комфортно, терпимо, тяжело (правила в return_trip.comfort).
+Минимум ведется отдельно по трем классам: самый дешевый, лучший терпимый, лучший комфортный.
+Сообщение приходит, когда любой из них стал ниже уже присланного на alert_drop (и один раз при запуске).
 """
 import json
 import os
@@ -34,7 +37,8 @@ CARRIERS = {"PC": "Pegasus", "DP": "Победа", "3F": "FlyOne Armenia", "S7":
 API = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
 NAMES = {"EVN": "Ереван", "LWN": "Гюмри", "TBS": "Тбилиси", "KUT": "Кутаиси", "OGZ": "Владикавказ", "LED": "Петербург",
          "MOW": "Москва", "AER": "Сочи", "MRV": "Минводы", "KZN": "Казань", "KUF": "Самара", "SVX": "Екатеринбург",
-         "VOG": "Волгоград", "UFA": "Уфа", "OVB": "Новосибирск", "MCX": "Махачкала", "GRV": "Грозный", "NAL": "Нальчик"}
+         "VOG": "Волгоград", "UFA": "Уфа", "OVB": "Новосибирск", "MCX": "Махачкала", "GRV": "Грозный", "NAL": "Нальчик",
+         "MSQ": "Минск", "IST": "Стамбул", "SAW": "Стамбул (Сабиха)", "GYD": "Баку", "TAS": "Ташкент", "ALA": "Алматы"}
 
 
 CUR_NAME = {"RUB": "₽", "AMD": "драм", "GEL": "лари", "USD": "$"}
@@ -127,6 +131,25 @@ def train_price(rt, arr, rail_cal):
     return min(prices), True
 
 
+def comfort(rt, o):
+    """Весь путь в часах (наземка до аэропорта + перелеты + поезд из Москвы) и класс: 2 комфорт, 1 более-менее, 0 эконом."""
+    c, legs = rt["comfort"], o["legs"]
+    start = legs[0]["origin"]
+    if legs[-1]["arr"] is None:
+        return None, 0
+    h = (legs[-1]["arr"] - legs[0]["dep"]).total_seconds() / 3600 + rt["starts"][start].get("ground_h", 0)
+    if legs[-1]["dest"] == "MOW":
+        h += rt["train_h"]
+    stops = sum(t["stops"] for t in legs) + len(legs) - 1
+    if (start in c["starts"] and len(legs) == 1 and stops <= c["max_stops"] and h <= c["max_h"]
+            and legs[-1]["dest"] == "LED"):
+        return h, 2
+    if (start not in c["ok_exclude"] and stops <= c["ok_max_stops"] and h <= c["ok_max_h"]
+            and o.get("wait", 0) <= c["ok_max_wait_h"]):
+        return h, 1
+    return h, 0
+
+
 def build(rt, legs, rail_cal):
     """legs: {(откуда, куда): [билеты]}. Возвращает все варианты с полной стоимостью, по возрастанию."""
     opts = []
@@ -146,25 +169,31 @@ def build(rt, legs, rail_cal):
                 extra = st["cost"] + rt["food"] + fin
                 opts.append({"legs": [t], "total": t["price"] + extra, "lines": [
                     f"{st['label']}: +{msg.money(st['cost'])}", f"🍞 Еда в пути: +{msg.money(rt['food'])}", fin_line]})
-    # два отдельных билета через хаб, только из Еревана
-    st = rt["starts"]["EVN"]
-    for hub in rt["hubs"]:
-        for a in legs.get(("EVN", hub), []):
-            if a["arr"] is None:
+    # два отдельных билета через хаб, из любого стартового аэропорта
+    for start, st in rt["starts"].items():
+        for hub in rt["hubs"]:
+            if hub == start:
                 continue
-            for dst in ("LED", "MOW"):
-                for b in legs.get((hub, dst), []):
-                    wait = (b["dep"] - a["arr"]).total_seconds() / 3600
-                    if not (rt["min_connection_h"] <= wait <= rt["max_connection_h"]):
-                        continue
-                    fin, fin_line = finish(b)
-                    long_wait = rt["long_wait_cost"] if wait >= rt["long_wait_h"] else 0
-                    food = rt["food"] + rt["transfer_food"] + long_wait
-                    extra = st["cost"] + food + fin
-                    lines = [f"{st['label']}: +{msg.money(st['cost'])}",
-                             f"🍞 Еда в пути и пересадка {round(wait)} ч в городе {name(hub)}: +{msg.money(food)}",
-                             fin_line, "⚠️ Два отдельных билета: багаж и стыковку никто не гарантирует"]
-                    opts.append({"legs": [a, b], "total": a["price"] + b["price"] + extra, "lines": lines})
+            ht = rt.get("hub_transfer_cost", {}).get(hub, 0)
+            for a in legs.get((start, hub), []):
+                if a["arr"] is None:
+                    continue
+                for dst in ("LED",) if hub == "MOW" else ("LED", "MOW"):
+                    for b in legs.get((hub, dst), []):
+                        wait = (b["dep"] - a["arr"]).total_seconds() / 3600
+                        if not (rt["min_connection_h"] <= wait <= rt["max_connection_h"]):
+                            continue
+                        fin, fin_line = finish(b)
+                        long_wait = rt["long_wait_cost"] if wait >= rt["long_wait_h"] else 0
+                        food = rt["food"] + rt["transfer_food"] + long_wait + ht
+                        extra = st["cost"] + food + fin
+                        lines = [f"{st['label']}: +{msg.money(st['cost'])}",
+                                 f"🍞 Еда в пути и пересадка {round(wait)} ч в городе {name(hub)}"
+                                 + (f" (с переездом между аэропортами {msg.money(ht)})" if ht else "") + f": +{msg.money(food)}",
+                                 fin_line, "⚠️ Два отдельных билета: багаж и стыковку никто не гарантирует"]
+                        opts.append({"legs": [a, b], "total": a["price"] + b["price"] + extra, "lines": lines, "wait": wait})
+    for o in opts:
+        o["hours"], o["comfort"] = comfort(rt, o)
     opts.sort(key=lambda o: (o["total"], o["legs"][0]["dep"]))
     return opts
 
@@ -176,8 +205,18 @@ def leg_line(t):
             f"<b>{msg.money(t['price'])}</b> · {msg.esc(t['carrier'] or '')}, {st}{dur} · {msg.a(t['link'], 'билет')}")
 
 
+COMFORT = {2: "😌 комфортно", 1: "🙂 терпимо", 0: "😬 тяжело, зато дешево"}
+CATS = (("cheap", "Самый дешевый", 0), ("ok", "Более-менее комфортный", 1), ("comfy", "Комфортный", 2))
+
+
+def best_by_cat(opts):
+    return {k: next((o for o in opts if o["comfort"] >= lvl), None) for k, _, lvl in CATS}
+
+
 def opt_block(o, pax, title):
     lines = [f"<b>{title}: {msg.money(o['total'])}</b> на человека, {msg.money(o['total'] * pax)} на двоих"]
+    if o.get("hours"):
+        lines.append(f"⏱ Весь путь ~{round(o['hours'])} ч · {COMFORT[o['comfort']]}")
     lines += [leg_line(t) for t in o["legs"]]
     lines += [msg.esc(x) for x in o["lines"]]
     return "\n".join(lines)
@@ -197,21 +236,42 @@ def pick(opts, top):
     return out
 
 
-def report(rt, opts, prev, pax):
+def report(rt, opts, prev, pax, why):
+    """prev: прошлые присланные минимумы по классам; why: какие классы подешевели."""
     best = opts[0]
     head = "🚨🔥🚨 <b>ДЕШЕВО ДОМОЙ - БЕРИ</b> 🚨🔥🚨" if best["total"] <= rt["target"] else "🛬 <b>ДОРОГА ДОМОЙ: НОВЫЙ МИНИМУМ</b>"
+    if "cheap" not in why:
+        head = "🛬 <b>ДОРОГА ДОМОЙ: " + ("КОМФОРТНЫЙ" if "comfy" in why else "ТЕРПИМЫЙ") + " ВАРИАНТ ПОДЕШЕВЕЛ</b>"
     blocks = [head]
-    if prev:
-        blocks.append(f"Было {msg.money(prev)}, стало {msg.money(best['total'])} на человека (-{msg.money(prev - best['total'])})")
-    top = pick(opts, rt["top"])
-    for i, o in enumerate(top):
-        blocks.append(opt_block(o, pax, "Лучший" if i == 0 else f"Вариант {i + 1}"))
+    cats = best_by_cat(opts)
+    shown, titles = [], []
+    for k, title, _ in reversed(CATS):
+        o = cats[k]
+        if o is None:
+            continue
+        t = title + (" 🔻" if k in why else "")
+        if k in why and prev.get(k):
+            t += f" (было {msg.money(prev[k])})"
+        same = next((i for i, x in enumerate(shown) if x is o), None)
+        if same is None:
+            shown.append(o)
+            titles.append(t)
+        else:
+            titles[same] = title + ", он же " + titles[same][0].lower() + titles[same][1:]
+    blocks += [opt_block(o, pax, t) for o, t in zip(shown, titles)]
+    for o in pick(opts, rt["top"]):
+        if any(o is x for x in shown):
+            continue
+        shown.append(o)
+        blocks.append(opt_block(o, pax, "Еще вариант"))
+        if len(shown) >= rt["top"] + 1:
+            break
     first_day = rt["first_day"]
-    early = next((o for o in opts if o["legs"][0]["dep"].date().isoformat() == first_day), None)
-    if early and all(early is not o for o in top):
-        blocks.append(opt_block(early, pax, f"Самый ранний ({msg.date_short(first_day)})"))
-    blocks.append(f"<i>Полная цена: билеты, дорога до аэропорта и от него, еда. Вылет не раньше {msg.date_short(first_day)} 03:00. "
-                  f"Данные из кэша Авиасейлса: проверьте цену перед покупкой</i>")
+    early = next((o for o in opts if o["legs"][0]["dep"].date().isoformat() == first_day and o["comfort"] >= 1), None)
+    if early and all(early is not o for o in shown):
+        blocks.append(opt_block(early, pax, f"Самый ранний терпимый ({msg.date_short(first_day)})"))
+    blocks.append(f"<i>Полная цена: билеты, дорога до аэропорта и от него, еда. Вылет {msg.date_short(first_day)}-"
+                  f"{msg.date_short(rt['last_day'])}, не раньше 03:00. Данные из кэша Авиасейлса: проверьте цену перед покупкой</i>")
     return "\n\n".join(blocks)
 
 
@@ -220,11 +280,12 @@ def run(cfg, token, data_dir, fetcher=fetch, rail_fetch=None, notify=watch.tg_se
     pax = cfg.get("pax", 1)
     path = data_dir / "tp_state.json"
     state = watch.load_json(path, {})
-    if state.get("v") != 3:
-        state = {"v": 3}
+    if state.get("v") != 4:
+        state = {"v": 4, "rates": state.get("rates")}
     months = sorted({rt["first_day"][:7], rt["last_day"][:7]})
     pairs = [(s, d) for s in rt["starts"] for d in ("LED", "MOW")]
-    pairs += [("EVN", h) for h in rt["hubs"]] + [(h, d) for h in rt["hubs"] for d in ("LED", "MOW")]
+    pairs += [(s, h) for s in rt["starts"] for h in rt["hubs"] if h != s]
+    pairs += [(h, d) for h in rt["hubs"] for d in ("LED", "MOW") if h != d]
     legs, errors = {}, []
     for o, d in pairs:
         earliest = datetime.fromisoformat(rt["starts"][o]["earliest"]) if o in rt["starts"] else None
@@ -257,20 +318,26 @@ def run(cfg, token, data_dir, fetcher=fetch, rail_fetch=None, notify=watch.tg_se
         st["label"] = st["label"] + local
     rt["home_cost"], _ = price_rub(rt["home"], rates)
     rt["moscow_transfer"], _ = price_rub(rt["moscow"], rates)
+    rt["hub_transfer_cost"] = {h: price_rub(p, rates)[0] for h, p in rt.get("hub_transfer", {}).items()}
     opts = build(rt, legs, rail_cal)
     print(f"Запросов: {len(pairs)}, с ошибками: {len(errors)}, вариантов: {len(opts)}")
     for o in pick(opts, 8):
-        print(o["total"], " + ".join(f"{t['origin']}-{t['dest']} {t['dep']:%d.%m %H:%M} {t['price']} {t['carrier']}" for t in o["legs"]))
+        print(o["total"], o["comfort"], round(o["hours"] or 0), " + ".join(f"{t['origin']}-{t['dest']} {t['dep']:%d.%m %H:%M} {t['price']} {t['carrier']}" for t in o["legs"]))
     if errors and len(errors) == len(pairs):
         watch.save_json(path, state)
         sys.exit(1)
     if opts:
-        best = opts[0]["total"]
-        prev = state.get("best_sent")
-        if prev is None or best < prev * (1 - rt["alert_drop"]):
-            notify(report(rt, opts, prev, pax), html=True)
-            state["best_sent"] = best
-        state["best_now"] = best
+        cats = best_by_cat(opts)
+        now = {k: o["total"] for k, o in cats.items() if o}
+        prev = state.get("best_sent") or {}
+        why = [k for k, v in now.items() if k not in prev or v < prev[k] * (1 - rt["alert_drop"])]
+        print("Минимумы по классам:", now, "присланные:", prev)
+        if why:
+            notify(report(rt, opts, prev, pax, why), html=True)
+            for k in why:
+                prev[k] = now[k]
+            state["best_sent"] = prev
+        state["best_now"] = now
         state["checked"] = watch.now().strftime("%Y-%m-%d %H:%M")
     watch.save_json(path, state)
 
@@ -290,6 +357,7 @@ def selftest():
             ("EVN", "LED"): [row("EVN", "LED", "2026-12-20T04:15:00+04:00", 18000, 600, 1),
                              row("EVN", "LED", "2026-12-20T01:00:00+04:00", 5000, 300)],  # до 03:00 после концерта: отсечь
             ("EVN", "MOW"): [row("EVN", "MOW", "2026-12-20T03:50:00+04:00", 11000, 210, 0, "UT")],
+            ("MOW", "LED"): [row("MOW", "LED", "2026-12-20T12:00:00+03:00", 2500, 90, 0, "DP")],
             ("EVN", "MRV"): [row("EVN", "MRV", "2026-12-20T08:00:00+04:00", 4000, 90, 0, "A4")],
             ("MRV", "LED"): [row("MRV", "LED", "2026-12-20T15:00:00+03:00", 5000, 210, 0, "DP")],
             ("TBS", "LED"): [row("TBS", "LED", "2026-12-21T12:00:00+04:00", 9000, 330, 1, "J2"),

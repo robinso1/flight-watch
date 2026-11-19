@@ -1,7 +1,7 @@
 name: tp-watch
 on:
   schedule:
-    - cron: "41 * * * *"
+    - cron: "11,41 * * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [tick]

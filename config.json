@@ -291,7 +291,7 @@
   },
   "return_trip": {
     "first_day": "2026-12-20",
-    "last_day": "2026-12-23",
+    "last_day": "2026-12-22",
     "starts": {
       "EVN": {
         "price": {
@@ -300,7 +300,8 @@
         },
         "earliest": "2026-12-20T03:00:00+04:00",
         "label": "🚌 Автобус 100 до Звартноца, круглосуточный",
-        "source": "sputnik8.com/ru/yerevan: автобус 100 круглосуточно, 500 драм (гид 2026)"
+        "source": "sputnik8.com/ru/yerevan: автобус 100 круглосуточно, 500 драм (гид 2026)",
+        "ground_h": 0.5
       },
       "LWN": {
         "price": {
@@ -309,7 +310,8 @@
         },
         "earliest": "2026-12-20T07:00:00+04:00",
         "label": "🚌 Автобус Ереван - Гюмри",
-        "source": "unitiki.com/buses/erevan/gyumri: от 718 руб"
+        "source": "unitiki.com/buses/erevan/gyumri: от 718 руб",
+        "ground_h": 2.5
       },
       "TBS": {
         "price": {
@@ -318,7 +320,8 @@
         },
         "earliest": "2026-12-20T16:00:00+04:00",
         "label": "🚐 Маршрутка Ереван - Тбилиси, 5-6 ч",
-        "source": "gotrip.ge/blog, октябрь 2026: от 8 000 драм; поезд 372 21:00-07:05 плацкарт от 15 490 драм"
+        "source": "gotrip.ge/blog, октябрь 2026: от 8 000 драм; поезд 372 21:00-07:05 плацкарт от 15 490 драм",
+        "ground_h": 6
       },
       "KUT": {
         "price": {
@@ -327,7 +330,8 @@
         },
         "earliest": "2026-12-20T18:00:00+04:00",
         "label": "🚐 Минивэн Ереван - Кутаиси, 7,5 ч",
-        "source": "bookaway.com/routes/armenia: от 35 USD, 1 рейс в день"
+        "source": "bookaway.com/routes/armenia: от 35 USD, 1 рейс в день",
+        "ground_h": 7.5
       },
       "OGZ": {
         "price": {
@@ -336,10 +340,12 @@
         },
         "earliest": "2026-12-20T20:00:00+03:00",
         "label": "🚐 Автобус Ереван - Владикавказ через Верхний Ларс (бывают очереди)",
-        "source": "unitiki.com: Ереван - Владикавказ 3 500 руб; avtovokzaly.ru: от 3 571 руб"
+        "source": "unitiki.com: Ереван - Владикавказ 3 500 руб; avtovokzaly.ru: от 3 571 руб",
+        "ground_h": 9
       }
     },
     "hubs": [
+      "MOW",
       "AER",
       "MRV",
       "KZN",
@@ -348,9 +354,17 @@
       "VOG",
       "UFA",
       "MCX",
-      "OVB"
+      "GRV",
+      "NAL",
+      "OVB",
+      "MSQ",
+      "IST",
+      "SAW",
+      "GYD",
+      "TAS",
+      "ALA"
     ],
-    "max_transfers": 1,
+    "max_transfers": 2,
     "food": 700,
     "transfer_food": 500,
     "long_wait_h": 10,
@@ -379,6 +393,29 @@
       "AMD": 0.2296,
       "GEL": 31.89,
       "USD": 82.75
+    },
+    "hub_transfer": {
+      "MOW": {
+        "amount": 700,
+        "cur": "RUB",
+        "note": "переезд между аэропортами Москвы, если прилет и вылет из разных: оценка по Аэроэкспрессу"
+      }
+    },
+    "train_h": 8,
+    "comfort": {
+      "starts": [
+        "EVN",
+        "LWN"
+      ],
+      "max_h": 12,
+      "max_stops": 1,
+      "ok_exclude": [
+        "OGZ"
+      ],
+      "ok_max_h": 24,
+      "ok_max_stops": 2,
+      "ok_max_wait_h": 14,
+      "note": "Комфорт: один билет, не больше 1 пересадки, весь путь до 12 ч, старт из Еревана или Гюмри. Более-менее: без Верхнего Ларса, до 24 ч с наземкой, до 2 пересадок, ожидание до 14 ч"
     }
   }
 }
