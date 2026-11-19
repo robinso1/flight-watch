@@ -153,22 +153,24 @@ def comfort(rt, o):
 def build(rt, legs, rail_cal):
     """legs: {(откуда, куда): [билеты]}. Возвращает все варианты с полной стоимостью, по возрастанию."""
     opts = []
+    pax = rt.get("pax", 1)
+    mp = lambda x: msg.money(x * pax)
 
     def finish(t):
         if t["dest"] == "MOW":
             p, real = train_price(rt, t["arr"], rail_cal)
             cost = p + rt["train_food"] + rt["moscow_transfer"]
-            return cost, (f"🚆 Поезд Москва - Петербург {'по календарю Туту' if real else '(оценка)'} {msg.money(p)}, "
-                          f"{rt['moscow']['label']} {msg.money(rt['moscow_transfer'])}, еда {msg.money(rt['train_food'])}: +{msg.money(cost)}")
-        return rt["home_cost"], f"🚇 {rt['home']['label']}: +{msg.money(rt['home_cost'])}"
+            return cost, (f"🚆 Поезд Москва - Петербург {'по календарю Туту' if real else '(оценка)'} {mp(p)}, "
+                          f"{rt['moscow']['label']} {mp(rt['moscow_transfer'])}, еда {mp(rt['train_food'])}: +{mp(cost)}")
+        return rt["home_cost"], f"🚇 {rt['home']['label']}: +{mp(rt['home_cost'])}"
 
     for start, st in rt["starts"].items():
         for dst in ("LED", "MOW"):
             for t in legs.get((start, dst), []):
                 fin, fin_line = finish(t)
                 extra = st["cost"] + rt["food"] + fin
-                opts.append({"legs": [t], "total": t["price"] + extra, "lines": [
-                    f"{st['label']}: +{msg.money(st['cost'])}", f"🍞 Еда в пути: +{msg.money(rt['food'])}", fin_line]})
+                opts.append({"legs": [t], "total": (t["price"] + extra) * pax, "lines": [
+                    f"{st['label']}: +{mp(st['cost'])}", f"🍞 Еда в пути: +{mp(rt['food'])}", fin_line]})
     # два отдельных билета через хаб, из любого стартового аэропорта
     for start, st in rt["starts"].items():
         for hub in rt["hubs"]:
@@ -187,22 +189,22 @@ def build(rt, legs, rail_cal):
                         long_wait = rt["long_wait_cost"] if wait >= rt["long_wait_h"] else 0
                         food = rt["food"] + rt["transfer_food"] + long_wait + ht
                         extra = st["cost"] + food + fin
-                        lines = [f"{st['label']}: +{msg.money(st['cost'])}",
+                        lines = [f"{st['label']}: +{mp(st['cost'])}",
                                  f"🍞 Еда в пути и пересадка {round(wait)} ч в городе {name(hub)}"
-                                 + (f" (с переездом между аэропортами {msg.money(ht)})" if ht else "") + f": +{msg.money(food)}",
+                                 + (f" (с переездом между аэропортами {mp(ht)})" if ht else "") + f": +{mp(food)}",
                                  fin_line, "⚠️ Два отдельных билета: багаж и стыковку никто не гарантирует"]
-                        opts.append({"legs": [a, b], "total": a["price"] + b["price"] + extra, "lines": lines, "wait": wait})
+                        opts.append({"legs": [a, b], "total": (a["price"] + b["price"] + extra) * pax, "lines": lines, "wait": wait})
     for o in opts:
         o["hours"], o["comfort"] = comfort(rt, o)
     opts.sort(key=lambda o: (o["total"], o["legs"][0]["dep"]))
     return opts
 
 
-def leg_line(t):
+def leg_line(t, pax=1):
     st = "прямой" if not t["stops"] else f"{t['stops']} перес."
     dur = f", в пути {t['mins'] // 60} ч {t['mins'] % 60:02d} мин" if t["mins"] else ""
     return (f"✈️ {name(t['origin'])} → {name(t['dest'])}, {msg.date_short(t['dep'].date().isoformat())} {t['dep']:%H:%M}: "
-            f"<b>{msg.money(t['price'])}</b> · {msg.esc(t['carrier'] or '')}, {st}{dur} · {msg.a(t['link'], 'билет')}")
+            f"<b>{msg.money(t['price'] * pax)}</b>{' за двоих' if pax == 2 else ''} · {msg.esc(t['carrier'] or '')}, {st}{dur} · {msg.a(t['link'], 'билет')}")
 
 
 COMFORT = {2: "😌 комфортно", 1: "🙂 терпимо", 0: "😬 тяжело, зато дешево"}
@@ -214,10 +216,11 @@ def best_by_cat(opts):
 
 
 def opt_block(o, pax, title):
-    lines = [f"<b>{title}: {msg.money(o['total'])}</b> на человека, {msg.money(o['total'] * pax)} на двоих"]
+    lines = [f"<b>{title}: {msg.money(o['total'])} на двоих</b> ({msg.money(o['total'] // pax)} на человека)" if pax == 2
+             else f"<b>{title}: {msg.money(o['total'])}</b>"]
     if o.get("hours"):
         lines.append(f"⏱ Весь путь ~{round(o['hours'])} ч · {COMFORT[o['comfort']]}")
-    lines += [leg_line(t) for t in o["legs"]]
+    lines += [leg_line(t, pax) for t in o["legs"]]
     lines += [msg.esc(x) for x in o["lines"]]
     return "\n".join(lines)
 
@@ -239,7 +242,7 @@ def pick(opts, top):
 def report(rt, opts, prev, pax, why):
     """prev: прошлые присланные минимумы по классам; why: какие классы подешевели."""
     best = opts[0]
-    head = "🚨🔥🚨 <b>ДЕШЕВО ДОМОЙ - БЕРИ</b> 🚨🔥🚨" if best["total"] <= rt["target"] else "🛬 <b>ДОРОГА ДОМОЙ: НОВЫЙ МИНИМУМ</b>"
+    head = "🚨🔥🚨 <b>ДЕШЕВО ДОМОЙ - БЕРИ</b> 🚨🔥🚨" if best["total"] <= rt["target"] * pax else "🛬 <b>ДОРОГА ДОМОЙ: НОВЫЙ МИНИМУМ</b>"
     if "cheap" not in why:
         head = "🛬 <b>ДОРОГА ДОМОЙ: " + ("КОМФОРТНЫЙ" if "comfy" in why else "ТЕРПИМЫЙ") + " ВАРИАНТ ПОДЕШЕВЕЛ</b>"
     blocks = [head]
@@ -270,7 +273,7 @@ def report(rt, opts, prev, pax, why):
     early = next((o for o in opts if o["legs"][0]["dep"].date().isoformat() == first_day and o["comfort"] >= 1), None)
     if early and all(early is not o for o in shown):
         blocks.append(opt_block(early, pax, f"Самый ранний терпимый ({msg.date_short(first_day)})"))
-    blocks.append(f"<i>Полная цена: билеты, дорога до аэропорта и от него, еда. Вылет {msg.date_short(first_day)}-"
+    blocks.append(f"<i>Все суммы на {pax} чел. Полная цена: билеты, дорога до аэропорта и от него, еда. Вылет {msg.date_short(first_day)}-"
                   f"{msg.date_short(rt['last_day'])}, не раньше 03:00. Данные из кэша Авиасейлса: проверьте цену перед покупкой</i>")
     return "\n\n".join(blocks)
 
@@ -280,8 +283,8 @@ def run(cfg, token, data_dir, fetcher=fetch, rail_fetch=None, notify=watch.tg_se
     pax = cfg.get("pax", 1)
     path = data_dir / "tp_state.json"
     state = watch.load_json(path, {})
-    if state.get("v") != 4:
-        state = {"v": 4, "rates": state.get("rates")}
+    if state.get("v") != 5:
+        state = {"v": 5, "rates": state.get("rates")}
     months = sorted({rt["first_day"][:7], rt["last_day"][:7]})
     pairs = [(s, d) for s in rt["starts"] for d in ("LED", "MOW")]
     pairs += [(s, h) for s in rt["starts"] for h in rt["hubs"] if h != s]
@@ -313,9 +316,10 @@ def run(cfg, token, data_dir, fetcher=fetch, rail_fetch=None, notify=watch.tg_se
         print("Курс не получен, беру прошлый:", type(e).__name__)
     print("Курс:", rates_src, {k: round(v, 4) for k, v in rates.items()})
     rt = json.loads(json.dumps(rt))
+    rt["pax"] = pax
     for st in rt["starts"].values():
         st["cost"], local = price_rub(st["price"], rates)
-        st["label"] = st["label"] + local
+        st["label"] = st["label"] + (local[:-1] + " с человека)" if local else "")
     rt["home_cost"], _ = price_rub(rt["home"], rates)
     rt["moscow_transfer"], _ = price_rub(rt["moscow"], rates)
     rt["hub_transfer_cost"] = {h: price_rub(p, rates)[0] for h, p in rt.get("hub_transfer", {}).items()}
