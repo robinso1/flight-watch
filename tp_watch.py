@@ -35,7 +35,7 @@ CARRIERS = {"PC": "Pegasus", "DP": "Победа", "3F": "FlyOne Armenia", "S7":
             "Y7": "NordStar", "EO": "Pegas Fly", "IO": "ИрАэро", "R3": "Якутия", "QH": "Air Kyrgyzstan",
             "GH": "Глобус", "7R": "РусЛайн", "YC": "Ямал", "SZ": "Somon Air", "A9": "Georgian Airways"}
 API = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
-NAMES = {"EVN": "Ереван", "LWN": "Гюмри", "TBS": "Тбилиси", "KUT": "Кутаиси", "OGZ": "Владикавказ", "LED": "Петербург",
+NAMES = {"EVN": "Ереван", "LWN": "Гюмри", "TBS": "Тбилиси", "KUT": "Кутаиси", "BUS": "Батуми", "OGZ": "Владикавказ", "LED": "Петербург",
          "MOW": "Москва", "AER": "Сочи", "MRV": "Минводы", "KZN": "Казань", "KUF": "Самара", "SVX": "Екатеринбург",
          "VOG": "Волгоград", "UFA": "Уфа", "OVB": "Новосибирск", "MCX": "Махачкала", "GRV": "Грозный", "NAL": "Нальчик",
          "MSQ": "Минск", "IST": "Стамбул", "SAW": "Стамбул (Сабиха)", "GYD": "Баку", "TAS": "Ташкент", "ALA": "Алматы"}
@@ -141,6 +141,8 @@ def comfort(rt, o):
     if legs[-1]["dest"] == "MOW":
         h += rt["train_h"]
     stops = sum(t["stops"] for t in legs) + len(legs) - 1
+    if rt["starts"][start].get("far"):
+        return h, 0
     if (start in c["starts"] and len(legs) == 1 and stops <= c["max_stops"] and h <= c["max_h"]
             and legs[-1]["dest"] == "LED"):
         return h, 2
@@ -194,7 +196,15 @@ def build(rt, legs, rail_cal):
                                  + (f" (с переездом между аэропортами {mp(ht)})" if ht else "") + f": +{mp(food)}",
                                  fin_line, "⚠️ Два отдельных билета: багаж и стыковку никто не гарантирует"]
                         opts.append({"legs": [a, b], "total": (a["price"] + b["price"] + extra) * pax, "lines": lines, "wait": wait})
+    # дальние старты только при аномально низкой цене относительно ближних
+    far = {k for k, v in rt["starts"].items() if v.get("far")}
+    near = [o["total"] for o in opts if o["legs"][0]["origin"] not in far]
+    if near:
+        lim = min(near) * rt.get("far_ratio", 0.6)
+        opts = [o for o in opts if o["legs"][0]["origin"] not in far or o["total"] <= lim]
     for o in opts:
+        if o["legs"][0]["origin"] in far:
+            o["lines"].insert(0, f"🚩 Дальний старт, взят только из-за аномально низкой цены (на {round((1 - o['total'] / min(near)) * 100)}% дешевле лучшего ближнего)")
         o["hours"], o["comfort"] = comfort(rt, o)
     opts.sort(key=lambda o: (o["total"], o["legs"][0]["dep"]))
     return opts
