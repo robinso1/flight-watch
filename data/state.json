@@ -24,12 +24,12 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 32667,
+   "last": 34506,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
    "alerted": null,
-   "last": 28986,
+   "last": 30826,
    "min": 16613
   },
   "EVN-DME|2026-12-22": {
@@ -59,7 +59,7 @@
   },
   "EVN-VKO|2026-12-23": {
    "alerted": null,
-   "last": 16104,
+   "last": 16103,
    "min": 15594
   },
   "LED-EVN|2026-12-17": {
