@@ -24,7 +24,7 @@
   },
   "EVN-DME|2026-12-20": {
    "alerted": null,
-   "last": 36434,
+   "last": 36433,
    "min": 20993
   },
   "EVN-DME|2026-12-21": {
@@ -34,7 +34,7 @@
   },
   "EVN-DME|2026-12-22": {
    "alerted": null,
-   "last": 27210,
+   "last": 27209,
    "min": 15594
   },
   "EVN-DME|2026-12-23": {
@@ -44,7 +44,7 @@
   },
   "EVN-VKO|2026-12-20": {
    "alerted": null,
-   "last": 25366,
+   "last": 25365,
    "min": 17587
   },
   "EVN-VKO|2026-12-21": {
@@ -117,7 +117,7 @@
   "combo_lvl": 1,
   "combo_min": 22491,
   "digest_date": "2026-11-06",
-  "empty_streak": 1,
+  "empty_streak": 2,
   "fail_streak": 0,
   "started": true
  }
