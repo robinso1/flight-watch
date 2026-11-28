@@ -118,7 +118,7 @@
   "combo_min": 22491,
   "digest_date": "2026-11-06",
   "empty_streak": 0,
-  "fail_streak": 0,
+  "fail_streak": 1,
   "started": true
  }
 }
